@@ -1,0 +1,6 @@
+streamlit
+beautifulsoup4
+pandas
+python-docx
+docx2pdf
+Pillow
