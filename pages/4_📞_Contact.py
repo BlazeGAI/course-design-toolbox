@@ -12,7 +12,3 @@ st.write(
 st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
 
 
-# Embed the iframe in the Streamlit app
-components.html(tawkto_iframe_html, height=520)
-
-
