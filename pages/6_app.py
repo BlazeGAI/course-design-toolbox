@@ -1,37 +1,27 @@
 import streamlit as st
 import requests
-import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
+from docx import Document
 
-def parse_moodle_backup(xml_file):
+def parse_template(doc_file):
     """
-    Parses a Moodle backup XML file and returns a structured representation of the course.
+    Parses a Word document template and returns a structured representation of the course.
     """
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
-
-    # Get course information
-    course_info = root.find("information")
-    course_name = course_info.find("original_course_fullname").text if course_info is not None else "Unknown Course"
-
-    # Extract sections and content
-    sections = root.findall("activities/activity")
+    doc = Document(doc_file)
     course_structure = []
 
-    for section in sections:
-        section_name = section.find("title").text if section.find("title") is not None else "Unnamed Section"
+    current_section = None
 
-        # Extract resources within the section
-        resources = section.findall("subplugin")
-        resources_list = []
+    for para in doc.paragraphs:
+        text = para.text.strip()
 
-        for res in resources:
-            resource_name = res.find("name").text if res.find("name") is not None else "Unnamed Resource"
-            resources_list.append(resource_name)
+        if text.startswith("Week"):  # Section identifier
+            current_section = {"section": text, "resources": []}
+            course_structure.append(current_section)
+        elif text and current_section is not None:
+            current_section["resources"].append(text)
 
-        course_structure.append({"section": section_name, "resources": resources_list})
-
-    return course_name, course_structure
+    return course_structure
 
 def scrape_live_content(session, url):
     """
@@ -44,46 +34,46 @@ def scrape_live_content(session, url):
     response = session.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extract and return relevant content as needed, e.g., text or activity content
+    # Extract and return relevant content as needed
     return soup.get_text()
 
 def main():
-    st.title("Moodle Backup to Text Converter")
+    st.title("Moodle Scraping Tool")
 
-    uploaded_file = st.file_uploader("Choose an XML file", type=["xml"])
+    # Upload template document
+    uploaded_template = st.file_uploader("Choose a course template", type=["docx"])
 
-    # Collect credentials and base URL
+    # Collect credentials and URLs
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    base_url = st.text_input("Course Base URL", "https://moodle.example.com/course/view.php?id=123")  # Adjust the default URL to your Moodle structure
+    login_url = st.text_input("Login URL", "https://moodle.example.com/login/index.php")  # Adjust default to your Moodle structure
+    base_url = st.text_input("Course Base URL", "https://moodle.example.com/course/view.php?id=123")  # Adjust default to your Moodle structure
 
-    if uploaded_file is not None and username and password:
-        # Parse the uploaded XML file
-        course_name, course_structure = parse_moodle_backup(uploaded_file)
+    if uploaded_template is not None and username and password:
+        # Parse the template
+        course_structure = parse_template(uploaded_template)
 
-        st.write(f"Course Name: {course_name}")
+        # Display the structure
+        st.write("Course Structure:")
 
-        content_output = [f"Course: {course_name}\n"]
+        content_output = []
 
         # Setup session
         session = requests.Session()
 
         # Login to Moodle platform
-        login_url = "https://online.tiffin.edu/login/index.php"  # Adjust to your Moodle login URL
         session.post(login_url, data={"username": username, "password": password})
 
         for sec in course_structure:
-            section_name = sec['section']
-            st.write(f"Section: {section_name}")
-            content_output.append(f"Section: {section_name}")
+            st.write(f"Section: {sec['section']}")
+            content_output.append(f"Section: {sec['section']}")
 
             for res in sec['resources']:
                 st.write(f"  - Resource: {res}")
                 content_output.append(f"  - Resource: {res}")
 
-                # Construct resource URL
-                # Adjust this to reflect how resources are organized in your Moodle platform
-                resource_url = f"{base_url}/resource/{res}"
+                # Construct URL and scrape content (adjust URL construction accordingly)
+                resource_url = f"{base_url}/resource/{res}"  # Adjust to reflect your Moodle structure
                 live_content = scrape_live_content(session, resource_url)
                 content_output.append(live_content)
 
@@ -91,10 +81,7 @@ def main():
 
         # Save content to a text file
         text_file_content = "\n".join(content_output)
-        st.download_button(label="Download as Text File",
-                           data=text_file_content,
-                           file_name=f"{course_name}_structure.txt",
-                           mime="text/plain")
+        st.download_button(label="Download as Text File", data=text_file_content, file_name="course_content.txt", mime="text/plain")
 
 if __name__ == "__main__":
     main()
