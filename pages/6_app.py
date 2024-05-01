@@ -34,9 +34,11 @@ def scrape_live_content(session, url):
     response = session.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extract and return relevant content
-    content = soup.get_text()
-    return content
+    # Extracting only specific elements (modify selectors as needed)
+    specific_content = soup.find_all("div", class_="specific-content-class")
+
+    content_texts = [element.get_text().strip() for element in specific_content]
+    return "\n".join(content_texts)
 
 def main():
     st.title("Moodle Scraping Tool")
@@ -72,8 +74,7 @@ def main():
                 st.write(f"  - Resource: {res}")
                 content_output.append(f"  - Resource: {res}")
 
-                # Construct URL for scraping
-                # Modify URL construction as necessary for your Moodle instance
+                # Construct URL and scrape content
                 resource_url = f"{base_url}/resource/{res}"
                 live_content = scrape_live_content(session, resource_url)
 
