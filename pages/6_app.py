@@ -50,7 +50,7 @@ def main():
     login_url = st.text_input("Login URL", "https://moodle.example.com/login/index.php")  # Adjust to your Moodle structure
     base_url = st.text_input("Course Base URL", "https://moodle.example.com/course/view.php?id=123")  # Adjust default to your Moodle structure
 
-    if uploaded_template is not none and username and password:
+    if uploaded_template is not None and username and password:
         # Parse the template
         course_structure = parse_template(uploaded_template)
 
