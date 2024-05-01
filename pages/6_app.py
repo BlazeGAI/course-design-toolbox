@@ -10,7 +10,7 @@ def parse_moodle_backup(xml_file):
 
     # Information about the course
     course_info = root.find("information")
-    course_name = course_info.find("original_course_fullname").text if course_info is not none else "Unknown Course"
+    course_name = course_info.find("original_course_fullname").text if course_info is not None else "Unknown Course"
 
     # Sections and content
     sections = root.findall("activities/activity")
