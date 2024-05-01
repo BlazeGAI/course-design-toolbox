@@ -52,9 +52,10 @@ def main():
 
     uploaded_file = st.file_uploader("Choose an XML file", type=["xml"])
 
-    # Collect credentials
+    # Collect credentials and base URL
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
+    base_url = st.text_input("Course Base URL", "https://moodle.example.com/course/view.php?id=123")  # Adjust the default URL to your Moodle structure
 
     if uploaded_file is not None and username and password:
         # Parse the uploaded XML file
@@ -68,7 +69,7 @@ def main():
         session = requests.Session()
 
         # Login to Moodle platform
-        login_url = "https://moodle.example.com/login/index.php"  # Adjust this to your Moodle login URL
+        login_url = "https://moodle.example.com/login/index.php"  # Adjust to your Moodle login URL
         session.post(login_url, data={"username": username, "password": password})
 
         for sec in course_structure:
@@ -80,8 +81,9 @@ def main():
                 st.write(f"  - Resource: {res}")
                 content_output.append(f"  - Resource: {res}")
 
-                # Fetch and append live content (adjust URL construction accordingly)
-                resource_url = f"https://moodle.example.com/course/resource/{res}"  # Adjust this for your Moodle structure
+                # Construct resource URL
+                # Adjust this to reflect how resources are organized in your Moodle platform
+                resource_url = f"{base_url}/resource/{res}"
                 live_content = scrape_live_content(session, resource_url)
                 content_output.append(live_content)
 
