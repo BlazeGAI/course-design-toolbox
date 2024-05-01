@@ -77,9 +77,9 @@ def main():
                 st.write(f"  - Resource: {res}")
                 content_output.append(f"  - Resource: {res}")
 
-                # Construct URL and scrape content
-                resource_url = f"{base_url}/resource/{res}"
-                # Modify selectors based on content types
+                # Construct URL for resource scraping
+                resource_url = f"{base_url}/section/{sec['section'].replace(' ', '').lower()}/{res.replace(' ', '').lower()}"
+                # Modify selectors as needed to focus on specific content types
                 selectors = [
                     {"tag": "p"},  # Paragraphs
                     {"tag": "div", "class": "content-class"},  # Specific content divs
