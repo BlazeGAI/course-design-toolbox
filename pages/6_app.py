@@ -23,22 +23,24 @@ def parse_template(doc_file):
 
     return course_structure
 
-def scrape_live_content(session, url):
+def scrape_live_content(session, url, selectors):
     """
     Scrapes content from the Moodle course's live site.
 
     Args:
     - session: requests.Session() object for authenticated requests.
     - url: URL of the course section or activity to scrape.
+    - selectors: A list of specific selectors to capture content accurately.
     """
     response = session.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extract specific content based on relevant tags/classes
-    content_paragraphs = soup.find_all("p")  # Modify selectors as needed
-    content_divs = soup.find_all("div", class_="content-class")
+    content_texts = []
 
-    content_texts = [element.get_text().strip() for element in content_paragraphs + content_divs]
+    for selector in selectors:
+        elements = soup.find_all(selector["tag"], class_=selector.get("class")) if "class" in selector else soup.find_all(selector["tag"])
+        content_texts.extend([element.get_text().strip() for element in elements])
+
     return "\n".join(content_texts)
 
 def main():
@@ -75,9 +77,14 @@ def main():
                 st.write(f"  - Resource: {res}")
                 content_output.append(f"  - Resource: {res}")
 
-                # Construct URL for resource scraping
-                resource_url = f"{base_url}/section/{sec['section'].replace(' ', '').lower()}/{res.replace(' ', '').lower()}"
-                live_content = scrape_live_content(session, resource_url)
+                # Construct URL and scrape content
+                resource_url = f"{base_url}/resource/{res}"
+                # Modify selectors based on content types
+                selectors = [
+                    {"tag": "p"},  # Paragraphs
+                    {"tag": "div", "class": "content-class"},  # Specific content divs
+                ]
+                live_content = scrape_live_content(session, resource_url, selectors)
 
                 # Include live content in output
                 st.write(live_content)
@@ -87,10 +94,8 @@ def main():
 
         # Save content to a text file
         text_file_content = "\n".join(content_output)
-        st.download_button(label="Download as Text File",
-                           data=text_file_content,
-                           file_name="course_content.txt",
-                           mime="text/plain")
+        st.download_button(label="Download as Text File", data=text_file_content, file_name="course_content.txt", mime="text/plain")
+
 
 if __name__ == "__main__":
     main()
