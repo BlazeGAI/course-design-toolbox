@@ -34,8 +34,8 @@ def scrape_live_content(session, url):
     response = session.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extracting only specific elements (modify selectors as needed)
-    specific_content = soup.find_all("div", class_="specific-content-class")
+    # Extract relevant elements based on classes or tags
+    specific_content = soup.find_all("div", class_="content-class")  # Adjust selector as needed
 
     content_texts = [element.get_text().strip() for element in specific_content]
     return "\n".join(content_texts)
@@ -49,7 +49,7 @@ def main():
     # Collect credentials and URLs
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    login_url = st.text_input("Login URL", "https://moodle.example.com/login/index.php")  # Adjust to your Moodle structure
+    login_url = st.text_input("Login URL", "https://moodle.example.com/login/index.php")  # Adjust default to your Moodle structure
     base_url = st.text_input("Course Base URL", "https://moodle.example.com/course/view.php?id=123")  # Adjust default to your Moodle structure
 
     if uploaded_template is not None and username and password:
@@ -74,7 +74,8 @@ def main():
                 st.write(f"  - Resource: {res}")
                 content_output.append(f"  - Resource: {res}")
 
-                # Construct URL and scrape content
+                # Construct URL for resource scraping
+                # Modify URL construction as necessary for your Moodle instance
                 resource_url = f"{base_url}/resource/{res}"
                 live_content = scrape_live_content(session, resource_url)
 
@@ -90,6 +91,7 @@ def main():
                            data=text_file_content,
                            file_name="course_content.txt",
                            mime="text/plain")
+
 
 if __name__ == "__main__":
     main()
