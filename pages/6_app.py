@@ -69,7 +69,7 @@ def main():
         session = requests.Session()
 
         # Login to Moodle platform
-        login_url = "https://moodle.example.com/login/index.php"  # Adjust to your Moodle login URL
+        login_url = "https://online.tiffin.edu/login/index.php"  # Adjust to your Moodle login URL
         session.post(login_url, data={"username": username, "password": password})
 
         for sec in course_structure:
