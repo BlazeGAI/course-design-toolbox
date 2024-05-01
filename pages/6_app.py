@@ -34,8 +34,9 @@ def scrape_live_content(session, url):
     response = session.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extract and return relevant content as needed
-    return soup.get_text()
+    # Extract and return relevant content
+    content = soup.get_text()
+    return content
 
 def main():
     st.title("Moodle Scraping Tool")
@@ -46,14 +47,13 @@ def main():
     # Collect credentials and URLs
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    login_url = st.text_input("Login URL", "https://moodle.example.com/login/index.php")  # Adjust default to your Moodle structure
+    login_url = st.text_input("Login URL", "https://moodle.example.com/login/index.php")  # Adjust to your Moodle structure
     base_url = st.text_input("Course Base URL", "https://moodle.example.com/course/view.php?id=123")  # Adjust default to your Moodle structure
 
-    if uploaded_template is not None and username and password:
+    if uploaded_template is not none and username and password:
         # Parse the template
         course_structure = parse_template(uploaded_template)
 
-        # Display the structure
         st.write("Course Structure:")
 
         content_output = []
@@ -72,16 +72,23 @@ def main():
                 st.write(f"  - Resource: {res}")
                 content_output.append(f"  - Resource: {res}")
 
-                # Construct URL and scrape content (adjust URL construction accordingly)
-                resource_url = f"{base_url}/resource/{res}"  # Adjust to reflect your Moodle structure
+                # Construct URL for scraping
+                # Modify URL construction as necessary for your Moodle instance
+                resource_url = f"{base_url}/resource/{res}"
                 live_content = scrape_live_content(session, resource_url)
+
+                # Include live content in output
+                st.write(live_content)
                 content_output.append(live_content)
 
             content_output.append("\n")
 
         # Save content to a text file
         text_file_content = "\n".join(content_output)
-        st.download_button(label="Download as Text File", data=text_file_content, file_name="course_content.txt", mime="text/plain")
+        st.download_button(label="Download as Text File",
+                           data=text_file_content,
+                           file_name="course_content.txt",
+                           mime="text/plain")
 
 if __name__ == "__main__":
     main()
