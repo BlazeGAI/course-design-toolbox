@@ -34,10 +34,11 @@ def scrape_live_content(session, url):
     response = session.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Refine content extraction based on specific elements
-    specific_content = soup.find_all("div", class_="content-class")  # Adjust selectors as needed
+    # Extract specific content based on relevant tags/classes
+    content_paragraphs = soup.find_all("p")  # Modify selectors as needed
+    content_divs = soup.find_all("div", class_="content-class")
 
-    content_texts = [element.get_text().strip() for element in specific_content]
+    content_texts = [element.get_text().strip() for element in content_paragraphs + content_divs]
     return "\n".join(content_texts)
 
 def main():
@@ -75,8 +76,7 @@ def main():
                 content_output.append(f"  - Resource: {res}")
 
                 # Construct URL for resource scraping
-                # Modify URL construction as necessary for your Moodle instance
-                resource_url = f"{base_url}/{sec['section'].replace(' ', '').lower()}/{res.replace(' ', '').lower()}"
+                resource_url = f"{base_url}/section/{sec['section'].replace(' ', '').lower()}/{res.replace(' ', '').lower()}"
                 live_content = scrape_live_content(session, resource_url)
 
                 # Include live content in output
@@ -91,7 +91,6 @@ def main():
                            data=text_file_content,
                            file_name="course_content.txt",
                            mime="text/plain")
-
 
 if __name__ == "__main__":
     main()
