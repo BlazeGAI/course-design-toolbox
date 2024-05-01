@@ -38,7 +38,7 @@ def main():
 
     uploaded_file = st.file_uploader("Choose an XML file", type=["xml"])
 
-    if uploaded_file is not none:
+    if uploaded_file is not None:
         # Parse the uploaded XML file
         course_name, course_structure = parse_moodle_backup(uploaded_file)
 
