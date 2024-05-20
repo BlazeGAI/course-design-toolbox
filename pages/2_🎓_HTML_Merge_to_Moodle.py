@@ -94,7 +94,7 @@ This application will help you merge the Course Build Plan Final with the HTML c
 
 [Course Build Template](https://docs.google.com/document/d/1UF8XEIzQMhntWtXVRs0HcnAtfxznVijCI8j55ectKzI/edit?usp=sharing)
 
-[Moodle HTML](https://drive.google.com/file/d/1EhHnYhfxOl7xRk6pP9iEcYZxU-uLOFbD/view?usp=sharing)
+[Moodle HTML](https://tiffin0-my.sharepoint.com/:u:/g/personal/mckaym_tiffin_edu/EQK8PUYHmRRFtPAxi2LsrssBIvWA1qyf9c3dKCN-h-7XDg?e=pkKAqc)
 """)
 
 if design_plan_file and template_file:
