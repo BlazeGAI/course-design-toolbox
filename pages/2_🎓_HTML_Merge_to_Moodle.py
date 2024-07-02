@@ -9,7 +9,7 @@ st.set_page_config(
 st.title("HTML Merge to Moodle")
 st.sidebar.header("HTML Merge to Moodle")
 st.sidebar.write(
-    """Once you have the HTML formatted correctly, this application will help you merge the Course Build Plan Final with the HTML code in Moodle."""
+    """Once you have the HTML formatted correctly, this application will help you merge the HTML code into Moodle."""
 )
 st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
 
@@ -79,14 +79,14 @@ def insert_content_into_template_string_manipulation(template_html, weeks_data):
     return template_html
 
 # Streamlit UI for file upload
-design_plan_file = st.file_uploader("Upload Course Build Plan File", key="design_plan")
+design_plan_file = st.file_uploader("Upload the stripped_HTML", key="design_plan")
 template_file = st.file_uploader("Upload Moodle HTML Template File", key="template")
 
 # Instructions and Links
 st.markdown("""
 This application will help you merge the Course Build Plan Final with the HTML code in Moodle. Upload the Course Build Plan Final after it has been converted to HTML and the headings have been formatted correctly. Then, upload the Moodle HTML Template.
 
-**Step 1:** Upload your correctly formatted HTML Course Build Plan. (IMPORTANT: The headings must match the Course Build Template exactly)  
+**Step 1:** Upload your correctly formatted HTML of the Course Design Doc. (IMPORTANT: The headings must match the Course Build Template exactly)  
 **Step 2:** Upload the Moodle HTML Template.  
 **Step 3:** Click "Download Processed HTML"  
 **Step 4:** Save the file.  
