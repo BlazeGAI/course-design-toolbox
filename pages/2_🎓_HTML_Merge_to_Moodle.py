@@ -92,9 +92,9 @@ This application will help you merge the Course Build Plan Final with the HTML c
 **Step 4:** Save the file.  
 **Step 5:** Copy and paste the HTML into the Moodle course shell.
 
-[Course Build Template](https://docs.google.com/document/d/1UF8XEIzQMhntWtXVRs0HcnAtfxznVijCI8j55ectKzI/edit?usp=sharing)
+[Course Build Template](https://tuonlineresources.com/coel-tools/coel-tools/course-build-template.docx)
 
-[Moodle HTML](https://tiffin0-my.sharepoint.com/:u:/g/personal/mckaym_tiffin_edu/EQK8PUYHmRRFtPAxi2LsrssBIvWA1qyf9c3dKCN-h-7XDg?e=pkKAqc)
+[Moodle HTML](https://tuonlineresources.com/coel-tools/moodle-merge-template.html)
 """)
 
 if design_plan_file and template_file:
