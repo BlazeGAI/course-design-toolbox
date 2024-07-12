@@ -92,7 +92,7 @@ This application will help you merge the Course Build Plan Final with the HTML c
 **Step 4:** Save the file.  
 **Step 5:** Copy and paste the HTML into the Moodle course shell.
 
-[Course Build Template](https://tuonlineresources.com/coel-tools/coel-tools/course-build-template.docx)
+[Course Build Template](https://tuonlineresources.com/coel-tools/course-build-template.docx)
 
 [Moodle HTML](https://tuonlineresources.com/coel-tools/moodle-template-240708.html)
 """)
