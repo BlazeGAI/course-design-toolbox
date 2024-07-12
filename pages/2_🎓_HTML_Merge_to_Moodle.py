@@ -94,7 +94,7 @@ This application will help you merge the Course Build Plan Final with the HTML c
 
 [Course Build Template](https://tuonlineresources.com/coel-tools/course-build-template.docx)
 
-[Moodle HTML](https://tuonlineresources.com/coel-tools/moodle-template-240708.html)
+[Moodle HTML](https://tuonlineresources.com/coel-tools/moodle-template-240712.html)
 """)
 
 if design_plan_file and template_file:
