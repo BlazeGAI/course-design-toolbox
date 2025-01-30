@@ -11,17 +11,18 @@ HEADINGS_TO_LOOK_FOR = [
     "Activity Instructions", "Writing and Submission Requirements"
 ]
 
-def login_to_moodle(session, login_url, username, password):
+LOGIN_URL = "https://online.tiffin.edu/login/index.php"  # Hardcoded login page
+
+def login_to_moodle(session, username, password):
     """Logs into Moodle using the provided session and credentials."""
     login_payload = {"username": username, "password": password}
-    session.post(login_url, data=login_payload)
+    session.post(LOGIN_URL, data=login_payload)
 
 def extract_section_html(session, section_url):
     """Extracts relevant HTML content from a Moodle course section."""
     response = session.get(section_url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Collect relevant headings and content
     extracted_html = ""
     for tag in soup.find_all(["h3", "h4"]):
         if tag.text.strip() in HEADINGS_TO_LOOK_FOR:
@@ -65,16 +66,15 @@ def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        login_url = st.text_input("Login URL", "https://your-moodle-site.com/login/index.php")
-        base_url = st.text_input("Course Base URL", "https://your-moodle-site.com/course/view.php?id=123")
+        base_url = st.text_input("Course Base URL", "https://online.tiffin.edu/course/view.php?id=123")
         
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
-        st.write("Extracting Moodle Content...")
+        st.write("Logging in and extracting course content...")
 
         session = requests.Session()
-        login_to_moodle(session, login_url, username, password)
+        login_to_moodle(session, username, password)
 
         html_output = "<html><head><title>Course Content</title></head><body>"
 
