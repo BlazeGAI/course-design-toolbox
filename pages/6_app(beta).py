@@ -9,7 +9,6 @@ def login_to_moodle(session, username, password):
     login_page = session.get(LOGIN_URL)
     soup = BeautifulSoup(login_page.content, "html.parser")
 
-    # Extract login token if required
     logintoken_tag = soup.find("input", {"name": "logintoken"})
     logintoken = logintoken_tag["value"] if logintoken_tag else None
 
@@ -19,7 +18,6 @@ def login_to_moodle(session, username, password):
 
     response = session.post(LOGIN_URL, data=login_payload)
 
-    # Check if login was successful
     if "login" in response.url or "Invalid login" in response.text:
         st.error("Login failed! Check your credentials.")
         return False
@@ -27,7 +25,7 @@ def login_to_moodle(session, username, password):
     return True  # Login successful, session now stores authentication cookies
 
 def extract_section_html(session, section_url):
-    """Extracts content from <div class='NextGen4'> in each Moodle section."""
+    """Extracts content from <div class='NextGen4'> for each section."""
     response = session.get(section_url)
 
     if response.status_code != 200:
@@ -35,6 +33,7 @@ def extract_section_html(session, section_url):
 
     soup = BeautifulSoup(response.content, "html.parser")
 
+    # Extract ONLY the NextGen4 div under the correct section
     section_content = soup.find("div", class_="NextGen4")
 
     return str(section_content) if section_content else "<p>No relevant content found.</p>"
@@ -94,7 +93,7 @@ def main():
 
         html_output = "<html><head><title>Course Content</title></head><body>"
 
-        # Define the 8 sections
+        # Define the sections (No Week 8)
         sections = {
             "Start Here": "0",
             "Week 1": "1",
@@ -103,8 +102,7 @@ def main():
             "Week 4": "4",
             "Week 5": "5",
             "Week 6": "6",
-            "Week 7": "7",
-            "Week 8": "8"
+            "Week 7": "7"
         }
 
         base_url = f"https://online.tiffin.edu/course/section.php?id={course_id}"
