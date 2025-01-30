@@ -92,8 +92,32 @@ def main():
 
             content_output.append("\n")
 
-        # Save content to a text file
-        text_file_content = "\n".join(content_output)
+        # Convert extracted content to HTML format
+        html_content = "<html><head><title>Course Content</title></head><body>"
+        
+        for sec in course_structure:
+            html_content += f"<h2>{sec['section']}</h2>"
+        
+            for res in sec['resources']:
+                html_content += f"<h3>{res}</h3>"
+                
+                # Construct URL for resource scraping
+                resource_url = f"{base_url}/section/{sec['section'].replace(' ', '').lower()}/{res.replace(' ', '').lower()}"
+                selectors = [{"tag": "p"}, {"tag": "div", "class": "content-class"}]
+                live_content = scrape_live_content(session, resource_url, selectors)
+        
+                html_content += f"<p>{live_content}</p>"
+        
+        html_content += "</body></html>"
+        
+        # Provide the HTML file for download
+        st.download_button(
+            label="Download as HTML",
+            data=html_content,
+            file_name="course_content.html",
+            mime="text/html"
+        )
+
         st.download_button(label="Download as Text File", data=text_file_content, file_name="course_content.txt", mime="text/plain")
 
 
