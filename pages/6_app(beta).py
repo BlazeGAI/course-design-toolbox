@@ -1,95 +1,100 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-from docx import Document
 
-def parse_template(doc_file):
+# Define the headings to extract
+HEADINGS_TO_LOOK_FOR = [
+    "Overview", "This Week's Learning Goals", "Key Topics for the Week", "Resources",
+    "Significance", "What's Next?", "What’s Next?", "Introduction",
+    "Initial Post Instructions (Due Wednesday)", "Follow-up Post Instructions (Due Saturday)",
+    "Tips for Success", "Writing Requirements", "Weekly Learning Goal(s)",
+    "Activity Instructions", "Writing and Submission Requirements"
+]
+
+def login_to_moodle(session, login_url, username, password):
     """
-    Parses a Word document template and returns a structured representation of the course.
+    Logs into Moodle using the provided session and credentials.
     """
-    doc = Document(doc_file)
-    course_structure = []
-    current_section = None
+    login_payload = {"username": username, "password": password}
+    session.post(login_url, data=login_payload)
 
-    for para in doc.paragraphs:
-        text = para.text.strip()
-        if text.startswith("Week"):  
-            current_section = {"section": text, "resources": []}
-            course_structure.append(current_section)
-        elif text and current_section is not None:
-            current_section["resources"].append(text)
-
-    return course_structure
-
-def scrape_section_html(session, section_url):
+def extract_section_html(session, section_url):
     """
-    Extracts the full HTML content from the 'Edit Section' page of a Moodle section.
+    Extracts relevant HTML content from a Moodle course section.
     """
     response = session.get(section_url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Find the "Edit Section" button or link (Modify based on Moodle's structure)
-    edit_button = soup.find("a", string="Edit section")
-    if edit_button:
-        edit_section_url = edit_button["href"]
-        edit_page = session.get(edit_section_url)
-        edit_soup = BeautifulSoup(edit_page.content, "html.parser")
+    # Collect relevant headings and content
+    extracted_html = ""
+    for tag in soup.find_all(["h3", "h4"]):
+        if tag.text.strip() in HEADINGS_TO_LOOK_FOR:
+            extracted_html += f"<{tag.name}>{tag.text.strip()}</{tag.name}>\n"
+            next_element = tag.find_next_sibling()
+            while next_element and next_element.name not in ["h3", "h4"]:
+                extracted_html += str(next_element) + "\n"
+                next_element = next_element.find_next_sibling()
 
-        # Locate the text editor where HTML is stored
-        html_content_area = edit_soup.find("textarea", {"id": "id_summary"})
-        if html_content_area:
-            return html_content_area.text.strip()
+    return extracted_html if extracted_html else "<p>No relevant content found.</p>"
 
-    return "<p>No section content found.</p>"
+def extract_activities_html(session, section_url):
+    """
+    Extracts HTML for activities linked within a Moodle section.
+    """
+    response = session.get(section_url)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    activities_html = ""
+    activity_links = soup.find_all("a", class_="activity-title")
+
+    for link in activity_links:
+        activity_name = link.text.strip()
+        activity_url = link.get("href")
+
+        if activity_url:
+            activity_html = scrape_activity_html(session, activity_url)
+            activities_html += f"<h3>{activity_name}</h3>\n{activity_html}\n"
+
+    return activities_html
 
 def scrape_activity_html(session, activity_url):
     """
-    Extracts the full HTML content of a Moodle activity.
+    Extracts the full HTML content of a Moodle activity page.
     """
     response = session.get(activity_url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extract main content area (Modify based on Moodle's structure)
     content_area = soup.find("div", class_="activity-content")
     return str(content_area) if content_area else "<p>No activity content found.</p>"
 
 def main():
-    st.title("Moodle HTML Extractor")
-
-    uploaded_template = st.file_uploader("Choose a course template", type=["docx"])
+    st.title("Moodle Course HTML Extractor")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     login_url = st.text_input("Login URL", "https://moodle.example.com/login/index.php")
     base_url = st.text_input("Course Base URL", "https://moodle.example.com/course/view.php?id=123")
 
-    if uploaded_template is not None and username and password:
-        course_structure = parse_template(uploaded_template)
+    if username and password:
         st.write("Extracting Moodle Content...")
 
         session = requests.Session()
-        session.post(login_url, data={"username": username, "password": password})
+        login_to_moodle(session, login_url, username, password)
 
         html_output = "<html><head><title>Course Content</title></head><body>"
 
-        for sec in course_structure:
-            section_name = sec['section']
-            st.write(f"Extracting: {section_name}")
+        # Iterate through weeks (assuming Moodle uses numeric section IDs)
+        for week in range(1, 15):  # Adjust for total number of weeks
+            section_url = f"{base_url}#section-{week}"  
+            st.write(f"Extracting Week {week}")
 
-            section_url = f"{base_url}#section-{section_name.split()[-1]}"  # Adjust as needed
-            section_html = scrape_section_html(session, section_url)
+            section_html = extract_section_html(session, section_url)
+            activities_html = extract_activities_html(session, section_url)
 
-            html_output += f"<h2>{section_name}</h2>\n{section_html}\n"
-
-            for res in sec['resources']:
-                activity_url = f"{base_url}/mod/{res.replace(' ', '_').lower()}/view.php"
-                activity_html = scrape_activity_html(session, activity_url)
-
-                html_output += f"<h3>{res}</h3>\n{activity_html}\n"
+            html_output += f"<h2>Week {week}</h2>\n{section_html}\n{activities_html}\n"
 
         html_output += "</body></html>"
 
-        # Download the extracted HTML content
         st.download_button(
             label="Download as HTML",
             data=html_output,
