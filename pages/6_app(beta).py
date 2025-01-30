@@ -24,6 +24,19 @@ def login_to_moodle(session, username, password):
 
     return True  # Login successful
 
+def extract_section_html(session, section_url):
+    """Extracts content from <div class='NextGen4'> for each section."""
+    response = session.get(section_url)
+
+    if response.status_code != 200:
+        return "<p>Failed to fetch section content.</p>"
+
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    section_content = soup.find("div", class_="NextGen4")
+
+    return str(section_content) if section_content else "<p>No relevant content found.</p>"
+
 def extract_activity_links(session, section_url):
     """Finds required activity links in a section, stopping at <h3>Wrap-Up</h3>."""
     response = session.get(section_url)
@@ -61,7 +74,7 @@ def extract_activity_html(session, activity_url):
     return str(activity_content) if activity_content else "<p>No activity content found.</p>"
 
 def main():
-    st.title("Moodle Course Activity Extractor")
+    st.title("Moodle Course Extractor")
 
     with st.form("moodle_form"):
         username = st.text_input("Username")
@@ -71,7 +84,7 @@ def main():
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
-        st.write("Logging in and extracting activities...")
+        st.write("Logging in and extracting section content and activities...")
 
         session = requests.Session()
         login_successful = login_to_moodle(session, username, password)
@@ -81,7 +94,7 @@ def main():
 
         html_output = ""
 
-        # Extract activities only from "Start Here" and "Week 1"
+        # Extract full section content + activities for "Start Here" and "Week 1"
         sections = {
             "Start Here": "0",
             "Week 1": "1"
@@ -91,7 +104,10 @@ def main():
 
         for section_name, section_id in sections.items():
             section_url = f"{base_url}#section-{section_id}"
-            st.write(f"Extracting activities from {section_name} ({section_url})")
+            st.write(f"Extracting section and activities from {section_name} ({section_url})")
+
+            # Extract full section content
+            section_html = extract_section_html(session, section_url)
 
             # Extract activity links (stopping at Wrap-Up)
             activity_links = extract_activity_links(session, section_url)
@@ -102,14 +118,14 @@ def main():
                 activity_html = extract_activity_html(session, activity_url)
                 activities_html += f"<h3>Activity</h3>\n{activity_html}\n"
 
-            # Only store activity content, no section content
-            html_output += f"<h2>{section_name}</h2>\n{activities_html}\n"
+            # Store section content first, then activities
+            html_output += f"<h2>{section_name}</h2>\n{section_html}\n{activities_html}\n"
 
         # Provide downloadable HTML file
         st.download_button(
-            label="Download Activities as HTML",
+            label="Download Content as HTML",
             data=html_output,
-            file_name="course_activities.html",
+            file_name="course_content.html",
             mime="text/html"
         )
 
