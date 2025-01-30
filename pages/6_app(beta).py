@@ -25,19 +25,26 @@ def login_to_moodle(session, username, password):
     return True  # Login successful
 
 def extract_activity_links(session, section_url):
-    """Finds required activity links in a section, ensuring uniqueness."""
+    """Finds required activity links in a section, stopping at <h3>Wrap-Up</h3>."""
     response = session.get(section_url)
 
     if response.status_code != 200:
-        return set()  # Use a set to prevent duplicates
+        return set()
 
     soup = BeautifulSoup(response.content, "html.parser")
-    activity_links = set()  # Store only unique activity links
+    activity_links = set()
 
-    for link in soup.find_all("a", href=True):
-        url = link["href"]
-        if "/mod/hsuforum/view.php?id=" in url or "/mod/assign/view.php?id=" in url:
-            activity_links.add(url)  # Add unique links only
+    wrap_up_found = False
+
+    for element in soup.find_all(["h3", "a"]):  # Find all headers and activity links
+        if element.name == "h3" and element.text.strip() == "Wrap-Up":
+            wrap_up_found = True
+            break  # Stop extracting activities once Wrap-Up is found
+
+        if element.name == "a" and "href" in element.attrs:
+            url = element["href"]
+            if "/mod/hsuforum/view.php?id=" in url or "/mod/assign/view.php?id=" in url:
+                activity_links.add(url)
 
     return activity_links
 
@@ -86,7 +93,7 @@ def main():
             section_url = f"{base_url}#section-{section_id}"
             st.write(f"Extracting activities from {section_name} ({section_url})")
 
-            # Extract activity links (ensuring uniqueness)
+            # Extract activity links (stopping at Wrap-Up)
             activity_links = extract_activity_links(session, section_url)
             activities_html = ""
 
