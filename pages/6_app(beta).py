@@ -2,44 +2,53 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-# Define the headings to extract
-HEADINGS_TO_LOOK_FOR = [
-    "Overview", "This Week's Learning Goals", "Key Topics for the Week", "Resources",
-    "Significance", "What's Next?", "What’s Next?", "Introduction",
-    "Initial Post Instructions (Due Wednesday)", "Follow-up Post Instructions (Due Saturday)",
-    "Tips for Success", "Writing Requirements", "Weekly Learning Goal(s)",
-    "Activity Instructions", "Writing and Submission Requirements"
-]
-
-LOGIN_URL = "https://online.tiffin.edu/login/index.php"  # Hardcoded login page
+LOGIN_URL = "https://online.tiffin.edu/login/index.php"  # Hardcoded Moodle login page
 
 def login_to_moodle(session, username, password):
-    """Logs into Moodle using the provided session and credentials."""
+    """Logs into Moodle and ensures session authentication persists."""
+    login_page = session.get(LOGIN_URL)
+    soup = BeautifulSoup(login_page.content, "html.parser")
+
+    # Extract login token if required
+    logintoken_tag = soup.find("input", {"name": "logintoken"})
+    logintoken = logintoken_tag["value"] if logintoken_tag else None
+
     login_payload = {"username": username, "password": password}
-    session.post(LOGIN_URL, data=login_payload)
+    if logintoken:
+        login_payload["logintoken"] = logintoken
+
+    response = session.post(LOGIN_URL, data=login_payload)
+
+    # Check if login was successful
+    if "login" in response.url or "Invalid login" in response.text:
+        st.error("Login failed! Check your credentials.")
+        return False
+
+    return True  # Login successful, session now stores authentication cookies
 
 def extract_section_html(session, section_url):
-    """Extracts relevant HTML content from a Moodle course section."""
+    """Extracts content from <div class='NextGen4'> in each Moodle section."""
     response = session.get(section_url)
+
+    if response.status_code != 200:
+        return "<p>Failed to fetch section content.</p>"
+
     soup = BeautifulSoup(response.content, "html.parser")
 
-    extracted_html = ""
-    for tag in soup.find_all(["h3", "h4"]):
-        if tag.text.strip() in HEADINGS_TO_LOOK_FOR:
-            extracted_html += f"<{tag.name}>{tag.text.strip()}</{tag.name}>\n"
-            next_element = tag.find_next_sibling()
-            while next_element and next_element.name not in ["h3", "h4"]:
-                extracted_html += str(next_element) + "\n"
-                next_element = next_element.find_next_sibling()
+    section_content = soup.find("div", class_="NextGen4")
 
-    return extracted_html if extracted_html else "<p>No relevant content found.</p>"
+    return str(section_content) if section_content else "<p>No relevant content found.</p>"
 
 def extract_activities_html(session, section_url):
     """Extracts HTML for activities linked within a Moodle section."""
     response = session.get(section_url)
-    soup = BeautifulSoup(response.content, "html.parser")
 
+    if response.status_code != 200:
+        return "<p>Failed to fetch activities.</p>"
+
+    soup = BeautifulSoup(response.content, "html.parser")
     activities_html = ""
+
     activity_links = soup.find_all("a", class_="activity-title")
 
     for link in activity_links:
@@ -50,14 +59,18 @@ def extract_activities_html(session, section_url):
             activity_html = scrape_activity_html(session, activity_url)
             activities_html += f"<h3>{activity_name}</h3>\n{activity_html}\n"
 
-    return activities_html
+    return activities_html if activities_html else "<p>No activities found.</p>"
 
 def scrape_activity_html(session, activity_url):
     """Extracts the full HTML content of a Moodle activity page."""
     response = session.get(activity_url)
-    soup = BeautifulSoup(response.content, "html.parser")
 
+    if response.status_code != 200:
+        return "<p>Failed to fetch activity content.</p>"
+
+    soup = BeautifulSoup(response.content, "html.parser")
     content_area = soup.find("div", class_="activity-content")
+
     return str(content_area) if content_area else "<p>No activity content found.</p>"
 
 def main():
@@ -66,7 +79,7 @@ def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        base_url = st.text_input("Course Base URL", "https://online.tiffin.edu/course/view.php?id=123")
+        base_url = st.text_input("Course Base URL", "https://online.tiffin.edu/course/view.php?id=33234")
         
         submit_button = st.form_submit_button("Submit")
 
@@ -74,13 +87,16 @@ def main():
         st.write("Logging in and extracting course content...")
 
         session = requests.Session()
-        login_to_moodle(session, username, password)
+        login_successful = login_to_moodle(session, username, password)
+
+        if not login_successful:
+            return
 
         html_output = "<html><head><title>Course Content</title></head><body>"
 
         for week in range(1, 15):  # Adjust for the number of weeks
-            section_url = f"{base_url}#section-{week}"  
-            st.write(f"Extracting Week {week}")
+            section_url = f"{base_url}#section-{week}"  # Correct format
+            st.write(f"Extracting Week {week} from {section_url}")
 
             section_html = extract_section_html(session, section_url)
             activities_html = extract_activities_html(session, section_url)
