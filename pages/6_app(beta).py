@@ -25,19 +25,19 @@ def login_to_moodle(session, username, password):
     return True  # Login successful
 
 def extract_activity_links(session, section_url):
-    """Finds required activity links in a section."""
+    """Finds required activity links in a section, ensuring uniqueness."""
     response = session.get(section_url)
 
     if response.status_code != 200:
-        return []
+        return set()  # Use a set to prevent duplicates
 
     soup = BeautifulSoup(response.content, "html.parser")
-    activity_links = []
+    activity_links = set()  # Store only unique activity links
 
     for link in soup.find_all("a", href=True):
         url = link["href"]
         if "/mod/hsuforum/view.php?id=" in url or "/mod/assign/view.php?id=" in url:
-            activity_links.append(url)
+            activity_links.add(url)  # Add unique links only
 
     return activity_links
 
@@ -86,7 +86,7 @@ def main():
             section_url = f"{base_url}#section-{section_id}"
             st.write(f"Extracting activities from {section_name} ({section_url})")
 
-            # Extract activity links
+            # Extract activity links (ensuring uniqueness)
             activity_links = extract_activity_links(session, section_url)
             activities_html = ""
 
