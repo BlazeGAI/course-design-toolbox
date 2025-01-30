@@ -12,16 +12,12 @@ HEADINGS_TO_LOOK_FOR = [
 ]
 
 def login_to_moodle(session, login_url, username, password):
-    """
-    Logs into Moodle using the provided session and credentials.
-    """
+    """Logs into Moodle using the provided session and credentials."""
     login_payload = {"username": username, "password": password}
     session.post(login_url, data=login_payload)
 
 def extract_section_html(session, section_url):
-    """
-    Extracts relevant HTML content from a Moodle course section.
-    """
+    """Extracts relevant HTML content from a Moodle course section."""
     response = session.get(section_url)
     soup = BeautifulSoup(response.content, "html.parser")
 
@@ -38,9 +34,7 @@ def extract_section_html(session, section_url):
     return extracted_html if extracted_html else "<p>No relevant content found.</p>"
 
 def extract_activities_html(session, section_url):
-    """
-    Extracts HTML for activities linked within a Moodle section.
-    """
+    """Extracts HTML for activities linked within a Moodle section."""
     response = session.get(section_url)
     soup = BeautifulSoup(response.content, "html.parser")
 
@@ -58,9 +52,7 @@ def extract_activities_html(session, section_url):
     return activities_html
 
 def scrape_activity_html(session, activity_url):
-    """
-    Extracts the full HTML content of a Moodle activity page.
-    """
+    """Extracts the full HTML content of a Moodle activity page."""
     response = session.get(activity_url)
     soup = BeautifulSoup(response.content, "html.parser")
 
@@ -70,12 +62,15 @@ def scrape_activity_html(session, activity_url):
 def main():
     st.title("Moodle Course HTML Extractor")
 
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    login_url = st.text_input("Login URL", "https://moodle.example.com/login/index.php")
-    base_url = st.text_input("Course Base URL", "https://moodle.example.com/course/view.php?id=123")
+    with st.form("moodle_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        login_url = st.text_input("Login URL", "https://your-moodle-site.com/login/index.php")
+        base_url = st.text_input("Course Base URL", "https://your-moodle-site.com/course/view.php?id=123")
+        
+        submit_button = st.form_submit_button("Submit")
 
-    if username and password:
+    if submit_button:
         st.write("Extracting Moodle Content...")
 
         session = requests.Session()
@@ -83,8 +78,7 @@ def main():
 
         html_output = "<html><head><title>Course Content</title></head><body>"
 
-        # Iterate through weeks (assuming Moodle uses numeric section IDs)
-        for week in range(1, 15):  # Adjust for total number of weeks
+        for week in range(1, 15):  # Adjust for the number of weeks
             section_url = f"{base_url}#section-{week}"  
             st.write(f"Extracting Week {week}")
 
