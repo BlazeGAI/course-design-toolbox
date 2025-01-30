@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-LOGIN_URL = "https://online.tiffin.edu/login/index.php"  # Hardcoded Moodle login page
+LOGIN_URL = "https://online.tiffin.edu/login/index.php"
 
 def login_to_moodle(session, username, password):
     """Logs into Moodle and ensures session authentication persists."""
@@ -22,7 +22,7 @@ def login_to_moodle(session, username, password):
         st.error("Login failed! Check your credentials.")
         return False
 
-    return True  # Login successful, session now stores authentication cookies
+    return True  # Login successful
 
 def extract_section_html(session, section_url):
     """Extracts content from <div class='NextGen4'> for each section."""
@@ -33,44 +33,38 @@ def extract_section_html(session, section_url):
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extract ONLY the NextGen4 div under the correct section
     section_content = soup.find("div", class_="NextGen4")
 
     return str(section_content) if section_content else "<p>No relevant content found.</p>"
 
-def extract_activities_html(session, section_url):
-    """Extracts HTML for activities linked within a Moodle section."""
+def extract_activity_links(session, section_url):
+    """Finds required activity links in a section."""
     response = session.get(section_url)
 
     if response.status_code != 200:
-        return "<p>Failed to fetch activities.</p>"
+        return []
 
     soup = BeautifulSoup(response.content, "html.parser")
-    activities_html = ""
+    activity_links = []
 
-    activity_links = soup.find_all("a", class_="activity-title")
+    for link in soup.find_all("a", href=True):
+        url = link["href"]
+        if "/mod/hsuforum/view.php?id=" in url or "/mod/assign/view.php?id=" in url:
+            activity_links.append(url)
 
-    for link in activity_links:
-        activity_name = link.text.strip()
-        activity_url = link.get("href")
+    return activity_links
 
-        if activity_url:
-            activity_html = scrape_activity_html(session, activity_url)
-            activities_html += f"<h3>{activity_name}</h3>\n{activity_html}\n"
-
-    return activities_html if activities_html else "<p>No activities found.</p>"
-
-def scrape_activity_html(session, activity_url):
-    """Extracts the full HTML content of a Moodle activity page."""
+def extract_activity_html(session, activity_url):
+    """Extracts HTML from <div class='NextGen4 TU-activity-page'> in an activity page."""
     response = session.get(activity_url)
 
     if response.status_code != 200:
         return "<p>Failed to fetch activity content.</p>"
 
     soup = BeautifulSoup(response.content, "html.parser")
-    content_area = soup.find("div", class_="activity-content")
+    activity_content = soup.find("div", class_="NextGen4 TU-activity-page")
 
-    return str(content_area) if content_area else "<p>No activity content found.</p>"
+    return str(activity_content) if activity_content else "<p>No activity content found.</p>"
 
 def main():
     st.title("Moodle Course HTML Extractor")
@@ -79,7 +73,7 @@ def main():
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         course_id = st.text_input("Course ID", "475074")  # Default example ID
-        
+
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
@@ -91,9 +85,9 @@ def main():
         if not login_successful:
             return
 
-        html_output = "<html><head><title>Course Content</title></head><body>"
+        html_output = ""
 
-        # Define the sections (No Week 8)
+        # Define sections (Week 8 excluded)
         sections = {
             "Start Here": "0",
             "Week 1": "1",
@@ -108,16 +102,24 @@ def main():
         base_url = f"https://online.tiffin.edu/course/section.php?id={course_id}"
 
         for section_name, section_id in sections.items():
-            section_url = f"{base_url}#section-{section_id}"  
+            section_url = f"{base_url}#section-{section_id}"
             st.write(f"Extracting {section_name} from {section_url}")
 
+            # Extract section content
             section_html = extract_section_html(session, section_url)
-            activities_html = extract_activities_html(session, section_url)
+
+            # Extract activities
+            activity_links = extract_activity_links(session, section_url)
+            activities_html = ""
+
+            for activity_url in activity_links:
+                st.write(f"Extracting activity from {activity_url}")
+                activity_html = extract_activity_html(session, activity_url)
+                activities_html += f"<h3>Activity</h3>\n{activity_html}\n"
 
             html_output += f"<h2>{section_name}</h2>\n{section_html}\n{activities_html}\n"
 
-        html_output += "</body></html>"
-
+        # Provide downloadable HTML file without <html> tags
         st.download_button(
             label="Download as HTML",
             data=html_output,
