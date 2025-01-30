@@ -79,7 +79,7 @@ def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        base_url = st.text_input("Course Base URL", "https://online.tiffin.edu/course/view.php?id=33234")
+        course_id = st.text_input("Course ID", "475074")  # Default example ID
         
         submit_button = st.form_submit_button("Submit")
 
@@ -94,14 +94,29 @@ def main():
 
         html_output = "<html><head><title>Course Content</title></head><body>"
 
-        for week in range(1, 15):  # Adjust for the number of weeks
-            section_url = f"{base_url}#section-{week}"  # Correct format
-            st.write(f"Extracting Week {week} from {section_url}")
+        # Define the 8 sections
+        sections = {
+            "Start Here": "0",
+            "Week 1": "1",
+            "Week 2": "2",
+            "Week 3": "3",
+            "Week 4": "4",
+            "Week 5": "5",
+            "Week 6": "6",
+            "Week 7": "7",
+            "Week 8": "8"
+        }
+
+        base_url = f"https://online.tiffin.edu/course/section.php?id={course_id}"
+
+        for section_name, section_id in sections.items():
+            section_url = f"{base_url}#section-{section_id}"  
+            st.write(f"Extracting {section_name} from {section_url}")
 
             section_html = extract_section_html(session, section_url)
             activities_html = extract_activities_html(session, section_url)
 
-            html_output += f"<h2>Week {week}</h2>\n{section_html}\n{activities_html}\n"
+            html_output += f"<h2>{section_name}</h2>\n{section_html}\n{activities_html}\n"
 
         html_output += "</body></html>"
 
