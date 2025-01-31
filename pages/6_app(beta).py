@@ -25,7 +25,7 @@ def login_to_moodle(session, username, password):
     return True  # Login successful
 
 def extract_section_html(session, section_url):
-    """Extracts and formats section content into Moodle template format."""
+    """Extracts and formats section content into the Moodle template."""
     response = session.get(section_url)
 
     if response.status_code != 200:
@@ -46,7 +46,7 @@ def extract_section_html(session, section_url):
     return formatted_section
 
 def extract_activity_links(session, section_url):
-    """Finds required activity links in a section, stopping at <h3>Wrap-Up</h3>."""
+    """Finds all unique activity links in a section."""
     response = session.get(section_url)
 
     if response.status_code != 200:
@@ -55,17 +55,10 @@ def extract_activity_links(session, section_url):
     soup = BeautifulSoup(response.content, "html.parser")
     activity_links = set()
 
-    wrap_up_found = False
-
-    for element in soup.find_all(["h3", "a"]):  # Find all headers and activity links
-        if element.name == "h3" and element.text.strip() == "Wrap-Up":
-            wrap_up_found = True
-            break  # Stop extracting activities once Wrap-Up is found
-
-        if element.name == "a" and "href" in element.attrs:
-            url = element["href"]
-            if "/mod/hsuforum/view.php?id=" in url or "/mod/assign/view.php?id=" in url:
-                activity_links.add(url)
+    for link in soup.find_all("a", href=True):
+        url = link["href"]
+        if "/mod/hsuforum/view.php?id=" in url or "/mod/assign/view.php?id=" in url:
+            activity_links.add(url)  # Store only unique activity links
 
     return activity_links
 
@@ -117,6 +110,7 @@ def main():
             "Week 1": "1",
             "Week 2": "2",
             "Week 3": "3",
+
         }
 
         base_url = f"https://online.tiffin.edu/course/section.php?id={course_id}"
@@ -125,10 +119,10 @@ def main():
             section_url = f"{base_url}#section-{section_id}"
             st.write(f"Extracting section and activities from {section_name} ({section_url})")
 
-            # Extract full section content in Moodle format
+            # Extract full section content
             section_html = extract_section_html(session, section_url)
 
-            # Extract activity links (stopping at Wrap-Up)
+            # Extract activity links
             activity_links = extract_activity_links(session, section_url)
             activities_html = ""
 
