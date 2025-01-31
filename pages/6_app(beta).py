@@ -37,7 +37,7 @@ def extract_section_html(session, section_url):
     if not section_content:
         return "<p>No relevant content found.</p>"
 
-    # Reformat to match required template structure
+    # Format to match required template structure
     formatted_section = f"""
     <div class="NextGen4">
         {section_content}
@@ -105,12 +105,11 @@ def main():
 
         html_output = ""
 
-        # Extract content only for Weeks 1 to 7
+        # Extract content only for Weeks 1 to 3
         sections = {
             "Week 1": "1",
             "Week 2": "2",
-            "Week 3": "3",
-
+            "Week 3": "3"
         }
 
         base_url = f"https://online.tiffin.edu/course/section.php?id={course_id}"
@@ -139,7 +138,7 @@ def main():
         st.download_button(
             label="Download Content as HTML",
             data=html_output,
-            file_name="weeks_1_7_content.html",
+            file_name="weeks_1_3_content.html",
             mime="text/html"
         )
 
