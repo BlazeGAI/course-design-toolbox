@@ -47,7 +47,7 @@ These applications serve as an all-in-one tool designed to assist in the course 
 Overall, this application is a valuable tool for TU educators and course designers looking to enhance the quality and efficiency of their online course development process.
 """
 )
-st.sidebar.title("COEL Course Build Toolbox")
+st.sidebar.title("COL Course Build Toolbox")
 st.sidebar.success("Select an application above.")
 st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
     
