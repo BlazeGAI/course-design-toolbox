@@ -24,11 +24,11 @@ def login_to_moodle(session, username, password):
         return False
     return True
 
-def get_first_five_activities(session, course_id):
+def get_all_activities(session, course_id):
     """
-    Fetches the Gradebook Setup page for `course_id`.
-    Finds up to the first 5 <a class="gradeitemheader"> links.
-    Returns a list of (title, url) tuples.
+    Fetches the Gradebook Setup page for `course_id`
+    and returns a list of (activity_title, activity_url)
+    by locating <a class="gradeitemheader"> links.
     """
     gradebook_url = f"https://online.tiffin.edu/grade/edit/tree/index.php?id={course_id}"
     response = session.get(gradebook_url)
@@ -38,8 +38,8 @@ def get_first_five_activities(session, course_id):
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Find up to the first 5 links with class="gradeitemheader"
-    link_tags = soup.select("a.gradeitemheader")[:5]
+    # Find ALL links with class="gradeitemheader"
+    link_tags = soup.select("a.gradeitemheader")
 
     activities = []
     for link_tag in link_tags:
@@ -54,71 +54,81 @@ def get_activity_html(session, activity_url):
     """Returns the raw HTML content of the given activity URL."""
     response = session.get(activity_url)
     if response.status_code != 200:
+        # If there's an issue fetching the page, return an empty string or None
         st.error(f"Failed to open activity URL: {activity_url}")
-        return None
+        return ""
     return response.text  # Full HTML as a string
 
 def extract_nextgen4_content(html_content):
     """
     Using BeautifulSoup, parse the full activity HTML
     and extract only <div class="NextGen4 TU-activity-page">.
-
-    You can remove or clean sub-elements if needed.
+    
+    You can optionally remove or modify any sub-elements here as needed.
     """
     soup = BeautifulSoup(html_content, "html.parser")
 
     page_div = soup.find("div", class_="NextGen4 TU-activity-page")
     if not page_div:
+        # Return a simple placeholder if there's no NextGen4 content
         return "<p>No NextGen4 TU-activity-page content found.</p>"
-
-    # Example: remove <p class="Internal_Links"> blocks if present
+    
+    # Example: remove <p class="Internal_Links"> blocks
     nav_elements = page_div.find_all("p", class_="Internal_Links")
     for nav in nav_elements:
         nav.decompose()
 
+    # Return just the HTML for that specific div
     return str(page_div)
 
 def main():
-    st.title("Moodle Top 5 Activities - NextGen4 Extractor")
+    st.title("Moodle Gradebook Activities Extractor")
 
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         course_id = st.text_input("Course ID", value="33234")
-        submit_button = st.form_submit_button("Log in & Extract")
+        submit_button = st.form_submit_button("Log in & Extract All Activities")
 
     if submit_button:
         session = requests.Session()
-        
+
         st.write("Logging into Moodle...")
         if not login_to_moodle(session, username, password):
             st.stop()
 
-        st.write("Login successful. Finding up to the first 5 activities...")
-        activities = get_first_five_activities(session, course_id)
+        st.write("Login successful. Finding all activity links from Gradebook Setup...")
+        activities = get_all_activities(session, course_id)
 
         if not activities:
-            st.warning("No activity links found or unable to parse Gradebook Setup.")
+            st.warning("No activities found or unable to parse the Gradebook Setup.")
             return
 
-        st.write(f"Found {len(activities)} activities. Extracting content...")
+        st.success(f"Found {len(activities)} activity link(s). Extracting content...")
 
-        combined_html = "<html><body>\n"
-        for idx, (act_title, act_url) in enumerate(activities, start=1):
-            st.write(f"Processing Activity {idx}: {act_title}")
-            raw_html = get_activity_html(session, act_url)
-            if raw_html:
-                snippet = extract_nextgen4_content(raw_html)
-                # Insert a heading with the activity title + snippet
-                combined_html += f"<h2>{act_title}</h2>\n{snippet}\n<br><hr><br>\n"
-        
-        combined_html += "</body></html>"
+        combined_html = "<html>\n<head><meta charset='UTF-8'></head>\n<body>\n"
+        combined_html += f"<h1>Extracted Activities for Course {course_id}</h1>\n"
 
-        # Provide a download button with the combined HTML of the first five activities
+        for idx, (title, url) in enumerate(activities, start=1):
+            st.write(f"Fetching Activity {idx}: {title}")
+            raw_html = get_activity_html(session, url)
+            if not raw_html:
+                # If fetch failed, skip
+                continue
+
+            # Extract only the NextGen4 content
+            nextgen4_html = extract_nextgen4_content(raw_html)
+
+            # Append to our combined HTML, prefixed by an H2 title
+            combined_html += f"<h2>{title}</h2>\n{nextgen4_html}\n"
+
+        combined_html += "</body>\n</html>"
+
+        # Provide a download button for the user to save the combined HTML
         st.download_button(
-            label="Download Extracted NextGen4 Content (HTML)",
+            label="Download All Activities (HTML)",
             data=combined_html,
-            file_name=f"course_{course_id}_activities_nextgen4.html",
+            file_name=f"course_{course_id}_activities.html",
             mime="text/html"
         )
 
