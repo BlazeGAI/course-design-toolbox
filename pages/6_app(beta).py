@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
+import re
 
 LOGIN_URL = "https://online.tiffin.edu/login/index.php"
 
@@ -21,20 +22,50 @@ def login_to_moodle(session, username, password):
         return False
     return True
 
-def extract_activity_content(session, activity_url):
-    """Extracts content from an individual activity page."""
-    response = session.get(activity_url)
+def extract_forum_content(session, url):
+    """Extracts content specifically from forum activities."""
+    response = session.get(url)
     if response.status_code != 200:
-        return "Failed to fetch activity content."
+        return "Failed to fetch forum content."
     
     soup = BeautifulSoup(response.content, "html.parser")
     
-    # Look for common content containers in Moodle activities
-    content = soup.find("div", class_="activity-content") or \
-             soup.find("div", class_="hsuforum-content") or \
-             soup.find("div", class_="content")
+    # Find the forum description/introduction
+    intro = soup.find("div", class_="hsuforum-intro")
+    intro_html = str(intro) if intro else ""
     
-    return str(content) if content else "No content found for this activity."
+    # Find the forum prompt/description
+    description = soup.find("div", class_="hsuforum-description")
+    description_html = str(description) if description else ""
+    
+    return f"{intro_html}\n{description_html}"
+
+def extract_assignment_content(session, url):
+    """Extracts content specifically from assignment activities."""
+    response = session.get(url)
+    if response.status_code != 200:
+        return "Failed to fetch assignment content."
+    
+    soup = BeautifulSoup(response.content, "html.parser")
+    
+    # Find the assignment description
+    description = soup.find("div", class_="description")
+    if description:
+        # Remove any submission status or grade information
+        for div in description.find_all("div", class_=["submissionstatustable", "gradingsummary"]):
+            div.decompose()
+        return str(description)
+    
+    return "No assignment content found."
+
+def extract_activity_content(session, url):
+    """Extracts content based on activity type."""
+    if "hsuforum" in url:
+        return extract_forum_content(session, url)
+    elif "assign" in url:
+        return extract_assignment_content(session, url)
+    else:
+        return "Unsupported activity type."
 
 def extract_section_content(session, course_id, section_num):
     """Extracts section content and its activities."""
@@ -64,16 +95,23 @@ def extract_section_content(session, course_id, section_num):
     
     # Extract activities
     activities = []
-    activity_links = target_section.find_all("a", class_="autolink")
+    activity_elements = target_section.find_all(class_="activity")
     
-    for link in activity_links:
-        activity_title = link.get("title", "").strip()
-        if activity_title.startswith("Activity"):
+    for activity in activity_elements:
+        # Find activity link and title
+        link = activity.find("a", href=re.compile(r"mod/(hsuforum|assign)/view\.php"))
+        if link:
             activity_url = link.get("href")
-            activities.append({
-                "title": activity_title,
-                "url": activity_url
-            })
+            # Try to find the activity title in different possible locations
+            title_elem = activity.find("span", class_="instancename") or activity.find("h4", class_="instancename")
+            activity_title = title_elem.get_text(strip=True) if title_elem else "Untitled Activity"
+            
+            if "Activity" in activity_title:
+                activities.append({
+                    "title": activity_title,
+                    "url": activity_url,
+                    "type": "forum" if "hsuforum" in activity_url else "assignment"
+                })
     
     return section_html, activities
 
@@ -123,7 +161,7 @@ def main():
             # Extract content for each activity
             activities_html = ""
             for activity in activities:
-                st.write(f"Extracting {activity['title']}")
+                st.write(f"Extracting {activity['title']} ({activity['type']})")
                 activity_content = extract_activity_content(session, activity['url'])
                 activities_html += f"""
                 <h3>{activity['title']}</h3>
