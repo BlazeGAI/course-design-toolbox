@@ -11,7 +11,10 @@ def login_to_moodle(session, username, password):
     logintoken_tag = soup.find("input", {"name": "logintoken"})
     logintoken = logintoken_tag["value"] if logintoken_tag else None
 
-    login_payload = {"username": username, "password": password}
+    login_payload = {
+        "username": username,
+        "password": password
+    }
     if logintoken:
         login_payload["logintoken"] = logintoken
 
@@ -24,28 +27,24 @@ def login_to_moodle(session, username, password):
 def get_first_activity_url(session, course_id):
     """
     Fetches the Gradebook Setup page for `course_id`.
-    Looks for the first <div class="rowtitle"><a class="gradeitemheader"...>
+    Looks for the first <a class="gradeitemheader">.
     Returns the URL if found, else None.
     """
     gradebook_url = f"https://online.tiffin.edu/grade/edit/tree/index.php?id={course_id}"
     response = session.get(gradebook_url)
-
     if response.status_code != 200:
         st.error("Failed to retrieve Gradebook Setup page.")
         return None
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Find the first `div.rowtitle` that contains `a.gradeitemheader`
-    rowtitle = soup.find("div", class_="rowtitle")
-    if not rowtitle:
-        return None
-
-    link_tag = rowtitle.find("a", class_="gradeitemheader")
-    if not link_tag:
-        return None
-
-    return link_tag.get("href")
+    # Find the first link with class "gradeitemheader"
+    # The trailing space in the HTML ("gradeitemheader ") is usually normalized,
+    # so .gradeitemheader should still match.
+    link_tag = soup.select_one("a.gradeitemheader")
+    if link_tag:
+        return link_tag.get("href")
+    return None
 
 def get_activity_html(session, activity_url):
     """Returns the raw HTML content of the given activity URL."""
@@ -53,7 +52,7 @@ def get_activity_html(session, activity_url):
     if response.status_code != 200:
         st.error(f"Failed to open activity URL: {activity_url}")
         return None
-    return response.text  # Raw HTML string
+    return response.text  # Full HTML as a string
 
 def main():
     st.title("Moodle First-Activity HTML Extractor")
