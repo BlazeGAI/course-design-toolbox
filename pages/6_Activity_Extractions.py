@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
-# Moodle login URL
 LOGIN_URL = "https://online.tiffin.edu/login/index.php"
 
 def login_to_moodle(session, username, password):
@@ -24,8 +23,9 @@ def login_to_moodle(session, username, password):
 
 def get_first_activity_url(session, course_id):
     """
-    Fetches the Gradebook Setup page for `course_id` and returns
-    the first /mod/... URL found.
+    Fetches the Gradebook Setup page for `course_id`.
+    Looks for the first <div class="rowtitle"><a class="gradeitemheader"...>
+    Returns the URL if found, else None.
     """
     gradebook_url = f"https://online.tiffin.edu/grade/edit/tree/index.php?id={course_id}"
     response = session.get(gradebook_url)
@@ -36,12 +36,16 @@ def get_first_activity_url(session, course_id):
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Look for the first <a> tag that points to /mod/...
-    link = soup.find("a", href=lambda x: x and "/mod/" in x)
-    if link:
-        return link.get("href", None)
+    # Find the first `div.rowtitle` that contains `a.gradeitemheader`
+    rowtitle = soup.find("div", class_="rowtitle")
+    if not rowtitle:
+        return None
 
-    return None
+    link_tag = rowtitle.find("a", class_="gradeitemheader")
+    if not link_tag:
+        return None
+
+    return link_tag.get("href")
 
 def get_activity_html(session, activity_url):
     """Returns the raw HTML content of the given activity URL."""
@@ -49,12 +53,11 @@ def get_activity_html(session, activity_url):
     if response.status_code != 200:
         st.error(f"Failed to open activity URL: {activity_url}")
         return None
-    return response.text  # Raw HTML
+    return response.text  # Raw HTML string
 
 def main():
     st.title("Moodle First-Activity HTML Extractor")
 
-    # Collect user credentials and course ID
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
@@ -67,21 +70,20 @@ def main():
         st.write("Logging into Moodle...")
         if not login_to_moodle(session, username, password):
             st.stop()
-        
-        st.write("Login successful. Locating the first activity link...")
+
+        st.write("Login successful. Finding the first activity link...")
         first_activity_url = get_first_activity_url(session, course_id)
+
         if not first_activity_url:
-            st.warning("No activities found or unable to parse the Gradebook Setup.")
+            st.warning("No activity link found or unable to parse Gradebook Setup.")
             return
 
-        st.write(f"Found the first activity link: {first_activity_url}")
+        st.write(f"First activity link found: {first_activity_url}")
         st.write("Extracting activity page HTML...")
 
         activity_html = get_activity_html(session, first_activity_url)
         if activity_html:
             st.success("Successfully retrieved the first activity's HTML.")
-            
-            # Provide a download button for the user to save the HTML
             st.download_button(
                 label="Download Activity HTML",
                 data=activity_html,
