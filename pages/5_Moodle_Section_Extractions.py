@@ -66,7 +66,7 @@ def format_template(section_name, section_html):
     return template
 
 def main():
-    st.title("Moodle Section Extractor")
+    st.title("Section Extractor")
     
     with st.form("moodle_form"):
         username = st.text_input("Username")
@@ -105,7 +105,7 @@ def main():
         st.download_button(
             label="Download Sections as HTML",
             data=html_output,
-            file_name="sections_1_3_content.html",
+            file_name="sections_extraction.html",
             mime="text/html"
         )
 
