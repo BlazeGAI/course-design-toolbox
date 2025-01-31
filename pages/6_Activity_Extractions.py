@@ -1,8 +1,6 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
-from io import StringIO
 
 # Moodle login URL
 LOGIN_URL = "https://online.tiffin.edu/login/index.php"
@@ -24,74 +22,71 @@ def login_to_moodle(session, username, password):
         return False
     return True
 
-def extract_activities_urls(session, course_id):
+def get_first_activity_url(session, course_id):
     """
     Fetches the Gradebook Setup page for `course_id` and returns
-    a list of (activity_title, activity_url) tuples for each item
-    found in the table.
+    the first /mod/... URL found.
     """
     gradebook_url = f"https://online.tiffin.edu/grade/edit/tree/index.php?id={course_id}"
     response = session.get(gradebook_url)
+
     if response.status_code != 200:
         st.error("Failed to retrieve Gradebook Setup page.")
-        return []
+        return None
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # The gradebook items are typically inside a table with id="gradetree" or similar.
-    # We'll use CSS selectors to find links pointing to '/mod/...'
-    # Adjust the selector to match your Moodle theme if needed.
-    
-    activity_rows = []
-    # Example approach: find all <a> tags inside the gradebook table that have '/mod/' in href
-    # This is a broad approach that should capture:
-    #   https://online.tiffin.edu/mod/assign/view.php?id=123
-    #   https://online.tiffin.edu/mod/hsuforum/view.php?id=456
-    # etc.
-    for link in soup.select("table#gradetree a"):
-        href = link.get("href", "")
-        if "/mod/" in href:  # we only want actual Moodle activities
-            title = link.get_text(strip=True)
-            activity_rows.append((title, href))
+    # Look for the first <a> tag that points to /mod/...
+    link = soup.find("a", href=lambda x: x and "/mod/" in x)
+    if link:
+        return link.get("href", None)
 
-    return activity_rows
+    return None
+
+def get_activity_html(session, activity_url):
+    """Returns the raw HTML content of the given activity URL."""
+    response = session.get(activity_url)
+    if response.status_code != 200:
+        st.error(f"Failed to open activity URL: {activity_url}")
+        return None
+    return response.text  # Raw HTML
 
 def main():
-    st.title("Moodle Gradebook Activity Link Extractor")
+    st.title("Moodle First-Activity HTML Extractor")
 
+    # Collect user credentials and course ID
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         course_id = st.text_input("Course ID", value="33234")
-        submit_button = st.form_submit_button("Log in & Extract Links")
+        submit_button = st.form_submit_button("Log in & Extract")
 
     if submit_button:
-        # Create a Session to maintain cookies (logged-in state)
         session = requests.Session()
-
-        st.write("Attempting to log in...")
+        
+        st.write("Logging into Moodle...")
         if not login_to_moodle(session, username, password):
-            st.stop()  # Stop the script if login failed
+            st.stop()
+        
+        st.write("Login successful. Locating the first activity link...")
+        first_activity_url = get_first_activity_url(session, course_id)
+        if not first_activity_url:
+            st.warning("No activities found or unable to parse the Gradebook Setup.")
+            return
 
-        st.write("Login successful! Fetching activity URLs from Gradebook Setup...")
-        activity_data = extract_activities_urls(session, course_id)
+        st.write(f"Found the first activity link: {first_activity_url}")
+        st.write("Extracting activity page HTML...")
 
-        if not activity_data:
-            st.warning("No activities found or there was an error.")
-        else:
-            st.success(f"Found {len(activity_data)} items.")
-            # Convert to DataFrame for nicer display
-            df = pd.DataFrame(activity_data, columns=["Activity Title", "Activity URL"])
-            st.dataframe(df)
-
-            # Provide CSV download
-            csv_buffer = StringIO()
-            df.to_csv(csv_buffer, index=False)
+        activity_html = get_activity_html(session, first_activity_url)
+        if activity_html:
+            st.success("Successfully retrieved the first activity's HTML.")
+            
+            # Provide a download button for the user to save the HTML
             st.download_button(
-                label="Download activity links (CSV)",
-                data=csv_buffer.getvalue(),
-                file_name=f"course_{course_id}_activity_links.csv",
-                mime="text/csv"
+                label="Download Activity HTML",
+                data=activity_html,
+                file_name="first_activity_page.html",
+                mime="text/html"
             )
 
 if __name__ == "__main__":
