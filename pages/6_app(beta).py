@@ -25,17 +25,25 @@ def login_to_moodle(session, username, password):
     return True  # Login successful
 
 def extract_section_html(session, section_url):
-    """Extracts content from <div class='NextGen4'> for each section."""
+    """Extracts and formats section content into Moodle template format."""
     response = session.get(section_url)
 
     if response.status_code != 200:
         return "<p>Failed to fetch section content.</p>"
 
     soup = BeautifulSoup(response.content, "html.parser")
-
     section_content = soup.find("div", class_="NextGen4")
 
-    return str(section_content) if section_content else "<p>No relevant content found.</p>"
+    if not section_content:
+        return "<p>No relevant content found.</p>"
+
+    # Reformat to match required template structure
+    formatted_section = f"""
+    <div class="NextGen4">
+        {section_content}
+    </div>
+    """
+    return formatted_section
 
 def extract_activity_links(session, section_url):
     """Finds required activity links in a section, stopping at <h3>Wrap-Up</h3>."""
@@ -77,9 +85,7 @@ def format_template(section_name, section_html, activities_html):
     """Formats extracted content into the Moodle template."""
     template = f"""
     <h2>{section_name}</h2>
-    <div class="NextGen4">
-        {section_html}
-    </div>
+    {section_html}
     
     {activities_html}
     """
@@ -119,7 +125,7 @@ def main():
             section_url = f"{base_url}#section-{section_id}"
             st.write(f"Extracting section and activities from {section_name} ({section_url})")
 
-            # Extract full section content
+            # Extract full section content in Moodle format
             section_html = extract_section_html(session, section_url)
 
             # Extract activity links (stopping at Wrap-Up)
