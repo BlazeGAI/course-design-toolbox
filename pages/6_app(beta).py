@@ -73,6 +73,18 @@ def extract_activity_html(session, activity_url):
 
     return str(activity_content) if activity_content else "<p>No activity content found.</p>"
 
+def format_template(section_name, section_html, activities_html):
+    """Formats extracted content into the Moodle template."""
+    template = f"""
+    <h2>{section_name}</h2>
+    <div class="NextGen4">
+        {section_html}
+    </div>
+    
+    {activities_html}
+    """
+    return template
+
 def main():
     st.title("Moodle Course Extractor")
 
@@ -118,8 +130,9 @@ def main():
                 activity_html = extract_activity_html(session, activity_url)
                 activities_html += f"<h3>Activity</h3>\n{activity_html}\n"
 
-            # Store section content first, then activities
-            html_output += f"<h2>{section_name}</h2>\n{section_html}\n{activities_html}\n"
+            # Format content into Moodle template
+            formatted_section = format_template(section_name, section_html, activities_html)
+            html_output += formatted_section
 
         # Provide downloadable HTML file
         st.download_button(
