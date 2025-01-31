@@ -36,47 +36,16 @@ def extract_section_html(session, section_url):
 
     return str(section_content) if section_content else "<p>No relevant content found.</p>"
 
-def extract_activity_links(session, section_url):
-    """Finds all unique activity links in a section."""
-    response = session.get(section_url)
-
-    if response.status_code != 200:
-        return set()
-
-    soup = BeautifulSoup(response.content, "html.parser")
-    activity_links = set()
-
-    for link in soup.find_all("a", href=True):
-        url = link["href"]
-        if "/mod/hsuforum/view.php?id=" in url or "/mod/assign/view.php?id=" in url:
-            activity_links.add(url)  # Store only unique activity links
-
-    return activity_links
-
-def extract_activity_html(session, activity_url):
-    """Extracts content from <div class='NextGen4 TU-activity-page'> in an activity page."""
-    response = session.get(activity_url)
-
-    if response.status_code != 200:
-        return "<p>Failed to fetch activity content.</p>"
-
-    soup = BeautifulSoup(response.content, "html.parser")
-    activity_content = soup.find("div", class_="NextGen4 TU-activity-page")
-
-    return str(activity_content) if activity_content else "<p>No activity content found.</p>"
-
-def format_template(section_name, section_html, activities_html):
-    """Formats extracted content into the Moodle template."""
+def format_template(section_name, section_html):
+    """Formats extracted section content into the Moodle template."""
     template = f"""
     <h2>{section_name}</h2>
     {section_html}
-    
-    {activities_html}
     """
     return template
 
 def main():
-    st.title("Moodle Course Extractor")
+    st.title("Moodle Section Extractor")
 
     with st.form("moodle_form"):
         username = st.text_input("Username")
@@ -86,7 +55,7 @@ def main():
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
-        st.write("Logging in and extracting section content and activities...")
+        st.write("Logging in and extracting section content...")
 
         session = requests.Session()
         login_successful = login_to_moodle(session, username, password)
@@ -107,29 +76,20 @@ def main():
 
         for section_name, section_id in sections.items():
             section_url = f"{base_url}#section-{section_id}"
-            st.write(f"Extracting section and activities from {section_name} ({section_url})")
+            st.write(f"Extracting section content from {section_name} ({section_url})")
 
             # Extract full section content
             section_html = extract_section_html(session, section_url)
 
-            # Extract activity links
-            activity_links = extract_activity_links(session, section_url)
-            activities_html = ""
-
-            for activity_url in activity_links:
-                st.write(f"Extracting activity from {activity_url}")
-                activity_html = extract_activity_html(session, activity_url)
-                activities_html += f"<h3>Activity</h3>\n{activity_html}\n"
-
             # Format content into Moodle template
-            formatted_section = format_template(section_name, section_html, activities_html)
+            formatted_section = format_template(section_name, section_html)
             html_output += formatted_section
 
         # Provide downloadable HTML file
         st.download_button(
-            label="Download Content as HTML",
+            label="Download Sections as HTML",
             data=html_output,
-            file_name="weeks_1_3_content.html",
+            file_name="sections_1_3_content.html",
             mime="text/html"
         )
 
