@@ -39,8 +39,6 @@ def get_first_activity_url(session, course_id):
     soup = BeautifulSoup(response.content, "html.parser")
 
     # Find the first link with class "gradeitemheader"
-    # The trailing space in the HTML ("gradeitemheader ") is usually normalized,
-    # so .gradeitemheader should still match.
     link_tag = soup.select_one("a.gradeitemheader")
     if link_tag:
         return link_tag.get("href")
@@ -54,8 +52,31 @@ def get_activity_html(session, activity_url):
         return None
     return response.text  # Full HTML as a string
 
+def extract_nextgen4_content(html_content):
+    """
+    Using BeautifulSoup, parse the full activity HTML
+    and extract only <div class="NextGen4 TU-activity-page">.
+    
+    You can also clean or remove sub-elements here as needed.
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+
+    # Find the specific div
+    page_div = soup.find("div", class_="NextGen4 TU-activity-page")
+    if not page_div:
+        return "<p>No NextGen4 TU-activity-page content found.</p>"
+    
+    # Optional: remove unwanted navigation or other elements
+    # For example, removing <p class="Internal_Links"> blocks:
+    nav_elements = page_div.find_all("p", class_="Internal_Links")
+    for nav in nav_elements:
+        nav.decompose()
+
+    # Return just the HTML for that specific div
+    return str(page_div)
+
 def main():
-    st.title("Moodle First-Activity HTML Extractor")
+    st.title("Moodle First-Activity NextGen4 Extractor")
 
     with st.form("moodle_form"):
         username = st.text_input("Username")
@@ -80,13 +101,18 @@ def main():
         st.write(f"First activity link found: {first_activity_url}")
         st.write("Extracting activity page HTML...")
 
-        activity_html = get_activity_html(session, first_activity_url)
-        if activity_html:
+        raw_html = get_activity_html(session, first_activity_url)
+        if raw_html:
             st.success("Successfully retrieved the first activity's HTML.")
+            
+            # Now parse or clean the HTML, extracting only the NextGen4 TU-activity-page div
+            cleaned_html = extract_nextgen4_content(raw_html)
+            
+            # Provide a download button for the user to save ONLY the extracted HTML portion
             st.download_button(
-                label="Download Activity HTML",
-                data=activity_html,
-                file_name="first_activity_page.html",
+                label="Download NextGen4 HTML snippet",
+                data=cleaned_html,
+                file_name="activity_nextgen4_page.html",
                 mime="text/html"
             )
 
