@@ -3,12 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 
 st.set_page_config(
-page_title="Image Resizer",
-page_icon="🖼️",)
-st.title("Image Resizer")
-st.sidebar.header("Image Resizer")
+page_title="Sections Extractor",
+page_icon=":hammer:",)
+st.title("Sections Extractor")
+st.sidebar.header("Sections Extractor")
 st.sidebar.write(
-    """This application allows users to resize images. You can upload multiple images, choose one of the common image sizes we use, and download the resized images as a single zip file."""
+    """This application application extracts the content from each week of the course into an HTML file."""
     )
 st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
 
@@ -76,7 +76,6 @@ def format_template(section_name, section_html):
     return template
 
 def main():
-    st.title("Section Extractor")
     
     with st.form("moodle_form"):
         username = st.text_input("Username")
