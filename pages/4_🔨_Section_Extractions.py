@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 st.set_page_config(
 page_title="Sections Extractor",
-page_icon=":hammer:",)
+page_icon="🔨",)
 st.title("Sections Extractor")
 st.sidebar.header("Sections Extractor")
 st.sidebar.write(
