@@ -92,7 +92,6 @@ def extract_nextgen4_content(html_content):
     return str(page_div)
 
 def main():
-    st.title("Moodle Gradebook Activities Extractor")
 
     with st.form("moodle_form"):
         username = st.text_input("Username")
