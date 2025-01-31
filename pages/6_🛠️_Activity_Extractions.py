@@ -143,3 +143,24 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    st.markdown("""
+
+    ## Using the Activity Extractor
+    
+    1. **Provide Credentials:**
+       - Enter your Moodle **Username** and **Password** in the form.
+    
+    2. **Specify the Course ID:**
+       - Enter the numeric Course ID (for example, 33234) in the **Course ID** field.
+    
+    3. **Extract Activities:**
+       - Click **Log in & Extract All Activities**.
+       - The application logs into Moodle and scans the Gradebook Setup page for all activity links.
+    
+    4. **Download the Consolidated File:**
+       - After extraction, the application creates a single HTML file containing all activities.
+       - Click **Download All Activities (HTML)** to save the file to your device.
+
+    
+    """)
