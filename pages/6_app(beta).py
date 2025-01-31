@@ -21,21 +21,33 @@ def login_to_moodle(session, username, password):
         return False
     return True
 
-def extract_section_html(session, course_id, section_num):
-    """Extracts content from a specific section using a direct course view."""
-    # First, get the main course page
+def extract_activity_content(session, activity_url):
+    """Extracts content from an individual activity page."""
+    response = session.get(activity_url)
+    if response.status_code != 200:
+        return "Failed to fetch activity content."
+    
+    soup = BeautifulSoup(response.content, "html.parser")
+    
+    # Look for common content containers in Moodle activities
+    content = soup.find("div", class_="activity-content") or \
+             soup.find("div", class_="hsuforum-content") or \
+             soup.find("div", class_="content")
+    
+    return str(content) if content else "No content found for this activity."
+
+def extract_section_content(session, course_id, section_num):
+    """Extracts section content and its activities."""
     course_url = f"https://online.tiffin.edu/course/view.php?id={course_id}"
     response = session.get(course_url)
     
     if response.status_code != 200:
-        return f"<p>Failed to fetch course content.</p>"
+        return "<p>Failed to fetch course content.</p>", []
     
     soup = BeautifulSoup(response.content, "html.parser")
-    
-    # Find all sections
     sections = soup.find_all("li", {"class": "section"})
     
-    # Find the specific section we want
+    # Find the specific section
     target_section = None
     for section in sections:
         section_id = section.get("id", "")
@@ -43,30 +55,43 @@ def extract_section_html(session, course_id, section_num):
             target_section = section
             break
     
-    if target_section:
-        # Find the NextGen4 div within this section
-        content = target_section.find("div", class_="NextGen4")
-        if content:
-            # Clean up the content by removing any unwanted elements
-            # Remove navigation elements that might cause confusion
-            nav_elements = content.find_all("p", class_="Internal_Links")
-            for nav in nav_elements:
-                nav.decompose()
-            
-            return str(content)
+    if not target_section:
+        return f"<p>No content found for section {section_num}.</p>", []
     
-    return f"<p>No content found for section {section_num}.</p>"
+    # Extract main section content
+    section_content = target_section.find("div", class_="NextGen4")
+    section_html = str(section_content) if section_content else ""
+    
+    # Extract activities
+    activities = []
+    activity_links = target_section.find_all("a", class_="autolink")
+    
+    for link in activity_links:
+        activity_title = link.get("title", "").strip()
+        if activity_title.startswith("Activity"):
+            activity_url = link.get("href")
+            activities.append({
+                "title": activity_title,
+                "url": activity_url
+            })
+    
+    return section_html, activities
 
-def format_template(section_name, section_html):
-    """Formats extracted section content into the template."""
+def format_template(section_name, section_html, activities_content):
+    """Formats extracted section and activity content into the template."""
     template = f"""
     <h2>{section_name}</h2>
-    {section_html}
+    <div class="section-content">
+        {section_html}
+    </div>
+    <div class="activities-content">
+        {activities_content}
+    </div>
     """
     return template
 
 def main():
-    st.title("Moodle Section Extractor")
+    st.title("Moodle Section and Activity Extractor")
     
     with st.form("moodle_form"):
         username = st.text_input("Username")
@@ -75,7 +100,7 @@ def main():
         submit_button = st.form_submit_button("Submit")
     
     if submit_button:
-        st.write("Logging in and extracting section content...")
+        st.write("Logging in and extracting content...")
         session = requests.Session()
         login_successful = login_to_moodle(session, username, password)
         
@@ -91,17 +116,31 @@ def main():
         
         for section_name, section_num in sections.items():
             st.write(f"Extracting content from {section_name} (Section {section_num})")
-            # Extract section content
-            section_html = extract_section_html(session, course_id, section_num)
+            
+            # Extract section content and activities
+            section_html, activities = extract_section_content(session, course_id, section_num)
+            
+            # Extract content for each activity
+            activities_html = ""
+            for activity in activities:
+                st.write(f"Extracting {activity['title']}")
+                activity_content = extract_activity_content(session, activity['url'])
+                activities_html += f"""
+                <h3>{activity['title']}</h3>
+                <div class="activity-content">
+                    {activity_content}
+                </div>
+                """
+            
             # Format content into template
-            formatted_section = format_template(section_name, section_html)
+            formatted_section = format_template(section_name, section_html, activities_html)
             html_output += formatted_section
         
         # Provide downloadable HTML file
         st.download_button(
-            label="Download Sections as HTML",
+            label="Download Sections and Activities as HTML",
             data=html_output,
-            file_name="sections_1_3_content.html",
+            file_name="sections_and_activities_content.html",
             mime="text/html"
         )
 
