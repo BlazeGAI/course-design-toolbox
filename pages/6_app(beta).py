@@ -22,21 +22,43 @@ def login_to_moodle(session, username, password):
     return True
 
 def extract_section_html(session, course_id, section_num):
-    """Extracts content from <div class='NextGen4'> for a specific section."""
-    # Use the proper URL format for accessing specific sections
-    section_url = f"https://online.tiffin.edu/course/view.php?id={course_id}&section={section_num}"
+    """Extracts content from a specific section using a direct course view."""
+    # First, get the main course page
+    course_url = f"https://online.tiffin.edu/course/view.php?id={course_id}"
+    response = session.get(course_url)
     
-    response = session.get(section_url)
     if response.status_code != 200:
-        return f"<p>Failed to fetch section content from section {section_num}.</p>"
+        return f"<p>Failed to fetch course content.</p>"
     
     soup = BeautifulSoup(response.content, "html.parser")
-    # Find the specific section content
-    section_content = soup.find("div", class_="NextGen4")
-    return str(section_content) if section_content else f"<p>No content found in section {section_num}.</p>"
+    
+    # Find all sections
+    sections = soup.find_all("li", {"class": "section"})
+    
+    # Find the specific section we want
+    target_section = None
+    for section in sections:
+        section_id = section.get("id", "")
+        if f"section-{section_num}" in section_id:
+            target_section = section
+            break
+    
+    if target_section:
+        # Find the NextGen4 div within this section
+        content = target_section.find("div", class_="NextGen4")
+        if content:
+            # Clean up the content by removing any unwanted elements
+            # Remove navigation elements that might cause confusion
+            nav_elements = content.find_all("p", class_="Internal_Links")
+            for nav in nav_elements:
+                nav.decompose()
+            
+            return str(content)
+    
+    return f"<p>No content found for section {section_num}.</p>"
 
 def format_template(section_name, section_html):
-    """Formats extracted section content into the Moodle template."""
+    """Formats extracted section content into the template."""
     template = f"""
     <h2>{section_name}</h2>
     {section_html}
@@ -61,7 +83,6 @@ def main():
             return
         
         html_output = ""
-        # Define sections to extract with their proper section numbers
         sections = {
             "Week 1": 1,
             "Week 2": 2,
@@ -70,9 +91,9 @@ def main():
         
         for section_name, section_num in sections.items():
             st.write(f"Extracting content from {section_name} (Section {section_num})")
-            # Extract section content using the section number
+            # Extract section content
             section_html = extract_section_html(session, course_id, section_num)
-            # Format content into Moodle template
+            # Format content into template
             formatted_section = format_template(section_name, section_html)
             html_output += formatted_section
         
