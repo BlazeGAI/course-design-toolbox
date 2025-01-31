@@ -2,6 +2,16 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
+st.set_page_config(
+page_title="Activity Extractor",
+page_icon="🛠️",)
+st.title("Activity Extractor")
+st.sidebar.header("Activity Extractor")
+st.sidebar.write(
+    """This application application extracts the content from each activity in the course into an HTML file."""
+    )
+st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
+
 LOGIN_URL = "https://online.tiffin.edu/login/index.php"
 
 def login_to_moodle(session, username, password):
