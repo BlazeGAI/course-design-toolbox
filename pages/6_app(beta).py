@@ -29,7 +29,7 @@ def extract_section_html(session, section_url):
     response = session.get(section_url)
 
     if response.status_code != 200:
-        return "<p>Failed to fetch section content.</p>"
+        return f"<p>Failed to fetch section content from {section_url}.</p>"
 
     soup = BeautifulSoup(response.content, "html.parser")
     section_content = soup.find("div", class_="NextGen4")
@@ -50,7 +50,7 @@ def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        course_id = st.text_input("Course ID", "475074")  # Default example ID
+        course_id = st.text_input("Course ID", "33234")  # Default course ID
 
         submit_button = st.form_submit_button("Submit")
 
@@ -65,17 +65,14 @@ def main():
 
         html_output = ""
 
-        # Extract content only for Weeks 1 to 3
+        # Extract content only for Sections 1 to 3
         sections = {
-            "Week 1": "1",
-            "Week 2": "2",
-            "Week 3": "3"
+            "Week 1": f"https://online.tiffin.edu/course/view.php?id={course_id}#section-1",
+            "Week 2": f"https://online.tiffin.edu/course/view.php?id={course_id}#section-2",
+            "Week 3": f"https://online.tiffin.edu/course/view.php?id={course_id}#section-3"
         }
 
-        base_url = f"https://online.tiffin.edu/course/section.php?id={course_id}"
-
-        for section_name, section_id in sections.items():
-            section_url = f"{base_url}#section-{section_id}"
+        for section_name, section_url in sections.items():
             st.write(f"Extracting section content from {section_name} ({section_url})")
 
             # Extract full section content
