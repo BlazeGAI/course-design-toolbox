@@ -1,11 +1,11 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="TU COL Build Toolbox",
+    page_title="TU COL Course Design Toolbox",
     page_icon="👋",
 )
 
-st.write("# Welcome to the Tiffin University COL Course Build Toolbox! 👋")
+st.write("# Welcome to the COL Course Design Toolbox! 👋")
 
 st.markdown(
     """
@@ -47,7 +47,7 @@ These applications serve as an all-in-one tool designed to assist in the course 
 Overall, this application is a valuable tool for TU educators and course designers looking to enhance the quality and efficiency of their online course development process.
 """
 )
-st.sidebar.title("COL Course Build Toolbox")
+st.sidebar.title("COL Course Design Toolbox")
 st.sidebar.success("Select an application above.")
 st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
     
