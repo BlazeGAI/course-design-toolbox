@@ -120,3 +120,24 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+st.markdown("""
+
+## Using the Sections Extractor
+
+1. **Enter Your Credentials:**
+   - Locate the **Username** and **Password** fields.
+   - Type your Moodle username and password.
+
+2. **Provide the Course ID:**
+   - Enter the course ID in the **Course ID** field (for example, 33234).
+
+3. **Begin Extraction:**
+   - Click the **Submit** button.
+   - The application logs into Moodle and retrieves content from each weekly section.
+
+4. **Download the Extracted File:**
+   - When the extraction completes, you will see a **Download Sections as HTML** button.
+   - Click this button to download a single HTML file containing all the selected sections.
+
+""")
