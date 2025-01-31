@@ -80,7 +80,7 @@ def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        course_id = st.text_input("Course ID", "33234")
+        course_id = st.text_input("Course ID", "12345")
         submit_button = st.form_submit_button("Submit")
     
     if submit_button:
