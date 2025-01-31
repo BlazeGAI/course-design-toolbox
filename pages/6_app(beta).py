@@ -106,10 +106,11 @@ def main():
 
         html_output = ""
 
-        # Extract full section content + activities for "Start Here" and "Week 1"
+        # Extract content only for Weeks 1, 2, and 3
         sections = {
-            "Start Here": "0",
-            "Week 1": "1"
+            "Week 1": "1",
+            "Week 2": "2",
+            "Week 3": "3"
         }
 
         base_url = f"https://online.tiffin.edu/course/section.php?id={course_id}"
@@ -138,7 +139,7 @@ def main():
         st.download_button(
             label="Download Content as HTML",
             data=html_output,
-            file_name="course_content.html",
+            file_name="weeks_1_2_3_content.html",
             mime="text/html"
         )
 
