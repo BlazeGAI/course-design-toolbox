@@ -2,6 +2,16 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 
+st.set_page_config(
+page_title="Image Resizer",
+page_icon="🖼️",)
+st.title("Image Resizer")
+st.sidebar.header("Image Resizer")
+st.sidebar.write(
+    """This application allows users to resize images. You can upload multiple images, choose one of the common image sizes we use, and download the resized images as a single zip file."""
+    )
+st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
+
 LOGIN_URL = "https://online.tiffin.edu/login/index.php"
 
 def login_to_moodle(session, username, password):
