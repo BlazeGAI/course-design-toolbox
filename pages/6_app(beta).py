@@ -25,7 +25,7 @@ def login_to_moodle(session, username, password):
     return True  # Login successful
 
 def extract_section_html(session, section_url):
-    """Extracts and formats section content into the Moodle template."""
+    """Extracts content from <div class='NextGen4'> for each section."""
     response = session.get(section_url)
 
     if response.status_code != 200:
@@ -34,16 +34,7 @@ def extract_section_html(session, section_url):
     soup = BeautifulSoup(response.content, "html.parser")
     section_content = soup.find("div", class_="NextGen4")
 
-    if not section_content:
-        return "<p>No relevant content found.</p>"
-
-    # Format to match required template structure
-    formatted_section = f"""
-    <div class="NextGen4">
-        {section_content}
-    </div>
-    """
-    return formatted_section
+    return str(section_content) if section_content else "<p>No relevant content found.</p>"
 
 def extract_activity_links(session, section_url):
     """Finds all unique activity links in a section."""
@@ -63,7 +54,7 @@ def extract_activity_links(session, section_url):
     return activity_links
 
 def extract_activity_html(session, activity_url):
-    """Extracts HTML from <div class='NextGen4 TU-activity-page'> in an activity page."""
+    """Extracts content from <div class='NextGen4 TU-activity-page'> in an activity page."""
     response = session.get(activity_url)
 
     if response.status_code != 200:
