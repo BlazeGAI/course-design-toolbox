@@ -71,20 +71,19 @@ def main():
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         mode = st.radio("Select extraction mode", ("All Sections", "Single Section"))
-        if mode == "All Sections":
-            course_id = st.text_input("Course ID", placeholder="Enter the ID number from the course URL")
-            section_id = ""
+        course_id = st.text_input("Course ID", placeholder="Enter the ID number from the course URL")
+        if mode == "Single Section":
+            section_id = st.selectbox(
+                "Select Section",
+                options=["section-1", "section-2", "section-3", "section-4", "section-5", "section-6", "section-7"]
+            )
         else:
-            course_id = st.text_input("Course ID", placeholder="Enter the ID number from the course URL")
-            section_id = st.text_input("Section ID", placeholder="Enter the section ID (e.g., section-1)")
+            section_id = ""
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
         if not course_id:
             st.error("Please provide the Course ID.")
-            return
-        if mode == "Single Section" and not section_id:
-            st.error("Please provide the Section ID.")
             return
 
         st.write("Logging in and extracting section content...")
@@ -95,21 +94,21 @@ def main():
         html_output = ""
         if mode == "All Sections":
             sections = {
-                "Week 1": 1,
-                "Week 2": 2,
-                "Week 3": 3,
-                "Week 4": 4,
-                "Week 5": 5,
-                "Week 6": 6,
-                "Week 7": 7
+                "Week 1": "section-1",
+                "Week 2": "section-2",
+                "Week 3": "section-3",
+                "Week 4": "section-4",
+                "Week 5": "section-5",
+                "Week 6": "section-6",
+                "Week 7": "section-7"
             }
-            for section_name, section_num in sections.items():
-                st.write(f"Extracting content from {section_name} (Section section-{section_num})")
-                section_html = extract_section_html(session, course_id, f"section-{section_num}")
+            for section_name, sec_id in sections.items():
+                st.write(f"Extracting content from {section_name} ({sec_id})")
+                section_html = extract_section_html(session, course_id, sec_id)
                 formatted_section = format_template(section_name, section_html)
                 html_output += formatted_section
         else:
-            st.write(f"Extracting content from section {section_id}")
+            st.write(f"Extracting content from {section_id}")
             section_html = extract_section_html(session, course_id, section_id)
             formatted_section = format_template(section_id, section_html)
             html_output = formatted_section
@@ -132,15 +131,15 @@ st.markdown(
    - Provide your Moodle username and password.
 
 2. **Select Extraction Mode:**
-   - Choose **All Sections** to download content from every section of a course.
-   - Choose **Single Section** to download content from one section only.
+   - Choose **All Sections** to extract content from every section of a course.
+   - Choose **Single Section** to extract content from one section only.
 
 3. **Provide Required IDs:**
-   - In **All Sections** mode, enter the Course ID.
-   - In **Single Section** mode, enter the Course ID and the Section ID (e.g., section-1).
+   - In both modes, enter the Course ID (from the course URL).
+   - In **Single Section** mode, use the dropdown to select the specific section (e.g., section-1, section-2, etc.).
 
 4. **Extract and Download:**
    - Click the **Submit** button.
-   - Once extraction completes, click the **Download Extracted HTML** button.
+   - After extraction, click the **Download Extracted HTML** button.
     """
 )
