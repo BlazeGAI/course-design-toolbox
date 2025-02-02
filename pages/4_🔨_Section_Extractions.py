@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
+import time  # Import time module for sleep delays
 
 st.set_page_config(page_title="Sections Extractor", page_icon="🔨")
 st.title("Sections Extractor")
@@ -92,6 +93,10 @@ def main():
         if not login_to_moodle(session, username, password):
             return
 
+        # Pause for a few seconds to ensure the login session is fully established.
+        st.write("Waiting a few seconds for the login process to complete...")
+        time.sleep(3)
+
         html_output = ""
         if section_choice == "All Sections":
             file_name = f"course-{course_id}_all_sections.html"
@@ -109,7 +114,7 @@ def main():
                 st.write(f"Extracting content for {week_label} ({sec_id})")
                 title, section_html = extract_section(session, course_id, sec_id)
                 if title:
-                    header_text = f"{week_label}: {title}"
+                    header_text = title
                 else:
                     header_text = week_label
                 formatted_section = format_template(header_text, section_html)
@@ -119,7 +124,7 @@ def main():
             week_num = section_choice.split("-")[-1]
             title, section_html = extract_section(session, course_id, section_choice)
             if title:
-                header_text = f"Week {week_num}: {title}"
+                header_text = title
             else:
                 header_text = f"Week {week_num}"
             file_name = f"course-{course_id}_week-{week_num}.html"
@@ -138,21 +143,4 @@ if __name__ == "__main__":
 
 st.markdown(
     """
-## Using the Sections Extractor
-
-1. **Enter Your Credentials:**
-   - Provide your Moodle username and password.
-
-2. **Provide the Course ID:**
-   - Enter the Course ID from the course URL. This field is required.
-
-3. **Select Section (optional):**
-   - Choose a specific section (for example, section-1) to extract that week.
-   - If you select **All Sections**, content from every section will be downloaded.
-
-4. **Extract and Download:**
-   - Click the **Submit** button.
-   - After extraction, click the **Download Extracted HTML** button.
-   - Each section’s header now shows the week number and the section title (if available).
-    """
-)
+## Using the Sections Extract
