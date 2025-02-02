@@ -66,9 +66,9 @@ def extract_section(session, course_id, target_section_id):
 def format_template(header_text, section_html):
     """Formats the extracted section content into an HTML template with an <h1> header."""
     template = f"""
-    <h1>{header_text}</h1>
-    {section_html}
-    """
+<h1>{header_text}</h1>
+{section_html}
+"""
     return template
 
 def main():
@@ -142,5 +142,22 @@ if __name__ == "__main__":
     main()
 
 st.markdown(
-    """
-## Using the Sections Extract
+"""\
+## Using the Sections Extractor
+
+1. **Enter Your Credentials:**
+   - Provide your Moodle username and password.
+
+2. **Provide the Course ID:**
+   - Enter the Course ID from the course URL. This field is required.
+
+3. **Select Section (optional):**
+   - Choose a specific section (for example, section-1) to extract that week.
+   - If you select **All Sections**, content from every section will be downloaded.
+
+4. **Extract and Download:**
+   - Click the **Submit** button.
+   - After extraction, click the **Download Extracted HTML** button.
+   - Each section’s header now displays only the section title if available.
+"""
+)
