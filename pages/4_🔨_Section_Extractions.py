@@ -58,10 +58,10 @@ def extract_section_html(session, course_id, target_section_id):
 
     return f"<p>No content found for {target_section_id}.</p>"
 
-def format_template(section_name, section_html):
+def format_template(header_text, section_html):
     """Formats extracted section content into an HTML template."""
     template = f"""
-    <h2>{section_name}</h2>
+    <h1>{header_text}</h1>
     {section_html}
     """
     return template
@@ -90,6 +90,7 @@ def main():
 
         html_output = ""
         if section_choice == "All Sections":
+            file_name = f"course-{course_id}_all_sections.html"
             sections = {
                 "Week 1": "section-1",
                 "Week 2": "section-2",
@@ -99,21 +100,25 @@ def main():
                 "Week 6": "section-6",
                 "Week 7": "section-7"
             }
-            for section_name, sec_id in sections.items():
-                st.write(f"Extracting content from {section_name} ({sec_id})")
+            for header_text, sec_id in sections.items():
+                st.write(f"Extracting content from {header_text} ({sec_id})")
                 section_html = extract_section_html(session, course_id, sec_id)
-                formatted_section = format_template(section_name, section_html)
+                formatted_section = format_template(header_text, section_html)
                 html_output += formatted_section
         else:
-            st.write(f"Extracting content from {section_choice}")
+            # Extract week number from the selected section (format: "section-X")
+            week_num = section_choice.split("-")[-1]
+            header_text = f"Week {week_num}"
+            file_name = f"course-{course_id}_week-{week_num}.html"
+            st.write(f"Extracting content from {header_text} ({section_choice})")
             section_html = extract_section_html(session, course_id, section_choice)
-            formatted_section = format_template(section_choice, section_html)
+            formatted_section = format_template(header_text, section_html)
             html_output = formatted_section
 
         st.download_button(
             label="Download Extracted HTML",
             data=html_output,
-            file_name="sections_extraction.html",
+            file_name=file_name,
             mime="text/html"
         )
 
@@ -128,14 +133,15 @@ st.markdown(
    - Provide your Moodle username and password.
 
 2. **Provide the Course ID:**
-   - Enter the Course ID from the course URL. This field is always required.
+   - Enter the Course ID from the course URL. This field is required.
 
 3. **Select Section (optional):**
-   - If you select a specific section (e.g., section-1) from the dropdown, only that section will be downloaded.
-   - If you select **All Sections**, content from all sections will be downloaded.
+   - Choose a specific section (for example, section-1) to extract a single week.
+   - If you select **All Sections**, content from every section will be downloaded.
 
 4. **Extract and Download:**
    - Click the **Submit** button.
    - After extraction, click the **Download Extracted HTML** button.
+   - The downloaded file name reflects the Course ID and, if applicable, the week number.
     """
 )
