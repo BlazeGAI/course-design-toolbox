@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-import time  # Import time module for sleep delays
+import time
 
 st.set_page_config(page_title="Sections Extractor", page_icon="🔨")
 st.title("Sections Extractor")
@@ -28,41 +28,36 @@ def login_to_moodle(session, username, password):
         return False
     return True
 
-def extract_section(session, course_id, target_section_id):
+def extract_all_sections(session, course_id):
     """
-    Extracts the title and content of a given section from the course page.
-    Returns a tuple: (title, content).
-    Attempts to locate the title in a header element (e.g., <h3 class="sectionname">).
+    Downloads the full course page (with a timestamp to bypass caching) and
+    returns a dictionary mapping section IDs to a tuple (title, content).
     """
-    # Append a timestamp to bypass any caching issues.
     course_url = f"https://online.tiffin.edu/course/view.php?id={course_id}&_={int(time.time())}"
     response = session.get(course_url)
     if response.status_code != 200:
-        return None, "<p>Failed to fetch course content.</p>"
+        st.error("Failed to fetch course content.")
+        return {}
     soup = BeautifulSoup(response.content, "html.parser")
     sections = soup.find_all("li", {"class": "section"})
-    target_section = None
+    results = {}
     for section in sections:
-        section_id_attr = section.get("id", "")
-        if section_id_attr == target_section_id:
-            target_section = section
-            break
-
-    if target_section:
-        # Try to extract the section title (Moodle might use <h3> or <h2> with class "sectionname")
-        title_tag = target_section.find(["h3", "h2"], class_="sectionname")
+        section_id = section.get("id", "")
+        if not section_id.startswith("section-"):
+            continue
+        # Extract title from header (if present)
+        title_tag = section.find(["h3", "h2"], class_="sectionname")
         title = title_tag.get_text(strip=True) if title_tag else None
-
-        # Extract the main content; the target div is assumed to be 'NextGen4'
-        content_div = target_section.find("div", class_="NextGen4")
+        # Extract the main content from the target div (assumed to be NextGen4)
+        content_div = section.find("div", class_="NextGen4")
         if content_div:
-            # Remove unwanted navigation elements.
             for nav in content_div.find_all("p", class_="Internal_Links"):
                 nav.decompose()
             content_html = str(content_div)
-            return title, content_html
-
-    return None, f"<p>No content found for {target_section_id}.</p>"
+        else:
+            content_html = f"<p>No content found for {section_id}.</p>"
+        results[section_id] = (title, content_html)
+    return results
 
 def format_template(header_text, section_html):
     """Formats the extracted section content into an HTML template with an <h1> header."""
@@ -73,20 +68,35 @@ def format_template(header_text, section_html):
     return template
 
 def main():
+    # Map week labels to corresponding section IDs.
+    sections_options = {
+        "Week 1": "section-1",
+        "Week 2": "section-2",
+        "Week 3": "section-3",
+        "Week 4": "section-4",
+        "Week 5": "section-5",
+        "Week 6": "section-6",
+        "Week 7": "section-7",
+    }
+
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         course_id = st.text_input("Course ID", placeholder="Enter the ID number from the course URL")
-        section_choice = st.selectbox(
-            "Select Section (optional)",
-            options=["All Sections", "section-1", "section-2", "section-3", "section-4", "section-5", "section-6", "section-7"],
-            index=0
+        selected_weeks = st.multiselect(
+            "Select Sections",
+            options=list(sections_options.keys()),
+            default=list(sections_options.keys())
         )
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
         if not course_id:
             st.error("Please provide the Course ID.")
+            return
+
+        if not selected_weeks:
+            st.error("Please select at least one section.")
             return
 
         st.write("Logging in and extracting section content...")
@@ -97,32 +107,30 @@ def main():
         st.write("Waiting a few seconds for the login process to complete...")
         time.sleep(3)
 
+        # Download all sections once.
+        all_sections = extract_all_sections(session, course_id)
+        if not all_sections:
+            st.error("No sections extracted.")
+            return
+
         html_output = ""
-        if section_choice == "All Sections":
-            file_name = f"course-{course_id}_all_sections.html"
-            # Map week labels to section IDs.
-            sections = {
-                "Week 1": "section-1",
-                "Week 2": "section-2",
-                "Week 3": "section-3",
-                "Week 4": "section-4",
-                "Week 5": "section-5",
-                "Week 6": "section-6",
-                "Week 7": "section-7"
-            }
-            for week_label, sec_id in sections.items():
-                st.write(f"Extracting content for {week_label} ({sec_id})")
-                title, section_html = extract_section(session, course_id, sec_id)
-                header_text = title if title else week_label
-                formatted_section = format_template(header_text, section_html)
+        # Iterate over the selected weeks in the order given by sections_options.
+        for week in selected_weeks:
+            sec_id = sections_options[week]
+            if sec_id in all_sections:
+                title, content_html = all_sections[sec_id]
+                header_text = title if title else week
+                formatted_section = format_template(header_text, content_html)
                 html_output += formatted_section
+
+        # Decide file name based on selection.
+        if len(selected_weeks) == len(sections_options):
+            file_name = f"course-{course_id}_all_sections.html"
+        elif len(selected_weeks) == 1:
+            week = selected_weeks[0]
+            file_name = f"course-{course_id}_week-{sections_options[week].split('-')[-1]}.html"
         else:
-            week_num = section_choice.split("-")[-1]
-            title, section_html = extract_section(session, course_id, section_choice)
-            header_text = title if title else f"Week {week_num}"
-            file_name = f"course-{course_id}_week-{week_num}.html"
-            formatted_section = format_template(header_text, section_html)
-            html_output = formatted_section
+            file_name = f"course-{course_id}_custom_sections.html"
 
         st.download_button(
             label="Download Extracted HTML",
@@ -144,13 +152,13 @@ st.markdown(
 2. **Provide the Course ID:**
    - Enter the Course ID from the course URL. This field is required.
 
-3. **Select Section (optional):**
-   - Choose a specific section (for example, section-1) to extract that week.
-   - If you select **All Sections**, content from every section will be downloaded.
+3. **Select Sections:**
+   - Use the multi‑select to choose one or more sections (weeks) to include.
+   - By default, all sections are selected.
 
 4. **Extract and Download:**
    - Click the **Submit** button.
    - After extraction, click the **Download Extracted HTML** button.
-   - Each section’s header now displays only the section title if available.
+   - The file name reflects the Course ID and the sections included.
 """
 )
