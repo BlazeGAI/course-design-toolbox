@@ -34,7 +34,8 @@ def extract_section(session, course_id, target_section_id):
     Returns a tuple: (title, content).
     Attempts to locate the title in a header element (e.g., <h3 class="sectionname">).
     """
-    course_url = f"https://online.tiffin.edu/course/view.php?id={course_id}"
+    # Append a timestamp to bypass any caching issues.
+    course_url = f"https://online.tiffin.edu/course/view.php?id={course_id}&_={int(time.time())}"
     response = session.get(course_url)
     if response.status_code != 200:
         return None, "<p>Failed to fetch course content.</p>"
@@ -93,7 +94,6 @@ def main():
         if not login_to_moodle(session, username, password):
             return
 
-        # Pause for a few seconds to ensure the login session is fully established.
         st.write("Waiting a few seconds for the login process to complete...")
         time.sleep(3)
 
@@ -113,20 +113,13 @@ def main():
             for week_label, sec_id in sections.items():
                 st.write(f"Extracting content for {week_label} ({sec_id})")
                 title, section_html = extract_section(session, course_id, sec_id)
-                if title:
-                    header_text = title
-                else:
-                    header_text = week_label
+                header_text = title if title else week_label
                 formatted_section = format_template(header_text, section_html)
                 html_output += formatted_section
         else:
-            # Single section extraction.
             week_num = section_choice.split("-")[-1]
             title, section_html = extract_section(session, course_id, section_choice)
-            if title:
-                header_text = title
-            else:
-                header_text = f"Week {week_num}"
+            header_text = title if title else f"Week {week_num}"
             file_name = f"course-{course_id}_week-{week_num}.html"
             formatted_section = format_template(header_text, section_html)
             html_output = formatted_section
