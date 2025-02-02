@@ -8,15 +8,13 @@ st.set_page_config(
 )
 st.title("Sections Extractor")
 st.sidebar.header("Sections Extractor")
-st.sidebar.write(
-    "This application extracts the content from a course section into an HTML file."
-)
+st.sidebar.write("This application extracts content from Moodle courses into an HTML file.")
 st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
 
 LOGIN_URL = "https://online.tiffin.edu/login/index.php"
 
 def login_to_moodle(session, username, password):
-    """Logs into Moodle and ensures session authentication persists."""
+    """Logs into Moodle and maintains session authentication."""
     login_page = session.get(LOGIN_URL)
     soup = BeautifulSoup(login_page.content, "html.parser")
     logintoken_tag = soup.find("input", {"name": "logintoken"})
@@ -33,7 +31,7 @@ def login_to_moodle(session, username, password):
     return True
 
 def extract_section_html(session, course_id, target_section_id):
-    """Extracts content from a specific section using a direct course view."""
+    """Extracts content from a specific section using the course view page."""
     course_url = f"https://online.tiffin.edu/course/view.php?id={course_id}"
     response = session.get(course_url)
 
@@ -61,7 +59,7 @@ def extract_section_html(session, course_id, target_section_id):
     return f"<p>No content found for {target_section_id}.</p>"
 
 def format_template(section_name, section_html):
-    """Formats extracted section content into the template."""
+    """Formats extracted section content into an HTML template."""
     template = f"""
     <h2>{section_name}</h2>
     {section_html}
@@ -72,34 +70,54 @@ def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        course_id = st.text_input("Course ID", placeholder="Enter the ID number from the course URL")
-        section_id = st.text_input("Section ID", placeholder="Enter the section ID (e.g., section-1)")
+        mode = st.radio("Select extraction mode", ("All Sections", "Single Section"))
+        if mode == "All Sections":
+            course_id = st.text_input("Course ID", placeholder="Enter the ID number from the course URL")
+            section_id = ""
+        else:
+            course_id = st.text_input("Course ID", placeholder="Enter the ID number from the course URL")
+            section_id = st.text_input("Section ID", placeholder="Enter the section ID (e.g., section-1)")
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
         if not course_id:
-            st.error("Please enter the Course ID.")
+            st.error("Please provide the Course ID.")
             return
-        if not section_id:
-            st.error("Please enter the Section ID.")
+        if mode == "Single Section" and not section_id:
+            st.error("Please provide the Section ID.")
             return
 
         st.write("Logging in and extracting section content...")
         session = requests.Session()
-        login_successful = login_to_moodle(session, username, password)
-
-        if not login_successful:
+        if not login_to_moodle(session, username, password):
             return
 
-        st.write(f"Extracting content from section {section_id}")
-        section_html = extract_section_html(session, course_id, section_id)
-        formatted_section = format_template(section_id, section_html)
-        html_output = formatted_section
+        html_output = ""
+        if mode == "All Sections":
+            sections = {
+                "Week 1": 1,
+                "Week 2": 2,
+                "Week 3": 3,
+                "Week 4": 4,
+                "Week 5": 5,
+                "Week 6": 6,
+                "Week 7": 7
+            }
+            for section_name, section_num in sections.items():
+                st.write(f"Extracting content from {section_name} (Section section-{section_num})")
+                section_html = extract_section_html(session, course_id, f"section-{section_num}")
+                formatted_section = format_template(section_name, section_html)
+                html_output += formatted_section
+        else:
+            st.write(f"Extracting content from section {section_id}")
+            section_html = extract_section_html(session, course_id, section_id)
+            formatted_section = format_template(section_id, section_html)
+            html_output = formatted_section
 
         st.download_button(
-            label="Download Section as HTML",
+            label="Download Extracted HTML",
             data=html_output,
-            file_name="section_extraction.html",
+            file_name="sections_extraction.html",
             mime="text/html"
         )
 
@@ -113,16 +131,16 @@ st.markdown(
 1. **Enter Your Credentials:**
    - Provide your Moodle username and password.
 
-2. **Provide the Course and Section IDs:**
-   - In the **Course ID** field, type the ID number from the course URL.
-   - In the **Section ID** field, type the section ID (for example, section-1).
+2. **Select Extraction Mode:**
+   - Choose **All Sections** to download content from every section of a course.
+   - Choose **Single Section** to download content from one section only.
 
-3. **Extract the Section Content:**
+3. **Provide Required IDs:**
+   - In **All Sections** mode, enter the Course ID.
+   - In **Single Section** mode, enter the Course ID and the Section ID (e.g., section-1).
+
+4. **Extract and Download:**
    - Click the **Submit** button.
-   - The application logs into Moodle and retrieves content from the specified section.
-
-4. **Download the Extracted File:**
-   - The **Download Section as HTML** button appears once extraction completes.
-   - Click this button to download an HTML file containing the section content.
+   - Once extraction completes, click the **Download Extracted HTML** button.
     """
 )
