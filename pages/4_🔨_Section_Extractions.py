@@ -104,17 +104,19 @@ def main():
         if not login_to_moodle(session, username, password):
             return
 
-        st.write("Waiting a few seconds for the login process to complete...")
-        time.sleep(3)
+        # Increase sleep time to ensure that login completes
+        st.write("Waiting for 5 seconds for the login process to complete...")
+        time.sleep(5)
 
-        # Download all sections once.
-        all_sections = extract_all_sections(session, course_id)
+        with st.spinner("Downloading full course content..."):
+            all_sections = extract_all_sections(session, course_id)
+
         if not all_sections:
-            st.error("No sections extracted.")
+            st.error("No sections were extracted from the course page.")
             return
 
         html_output = ""
-        # Iterate over the selected weeks in the order given by sections_options.
+        # Process only the selected sections in the order provided by sections_options.
         for week in selected_weeks:
             sec_id = sections_options[week]
             if sec_id in all_sections:
@@ -122,8 +124,10 @@ def main():
                 header_text = title if title else week
                 formatted_section = format_template(header_text, content_html)
                 html_output += formatted_section
+            else:
+                st.warning(f"Section for {week} ({sec_id}) was not found.")
 
-        # Decide file name based on selection.
+        # Determine file name based on selection.
         if len(selected_weeks) == len(sections_options):
             file_name = f"course-{course_id}_all_sections.html"
         elif len(selected_weeks) == 1:
