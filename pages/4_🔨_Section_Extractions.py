@@ -70,15 +70,12 @@ def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        mode = st.radio("Select extraction mode", ("All Sections", "Single Section"))
         course_id = st.text_input("Course ID", placeholder="Enter the ID number from the course URL")
-        if mode == "Single Section":
-            section_id = st.selectbox(
-                "Select Section",
-                options=["section-1", "section-2", "section-3", "section-4", "section-5", "section-6", "section-7"]
-            )
-        else:
-            section_id = ""
+        section_choice = st.selectbox(
+            "Select Section (optional)",
+            options=["All Sections", "section-1", "section-2", "section-3", "section-4", "section-5", "section-6", "section-7"],
+            index=0
+        )
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
@@ -92,7 +89,7 @@ def main():
             return
 
         html_output = ""
-        if mode == "All Sections":
+        if section_choice == "All Sections":
             sections = {
                 "Week 1": "section-1",
                 "Week 2": "section-2",
@@ -108,9 +105,9 @@ def main():
                 formatted_section = format_template(section_name, section_html)
                 html_output += formatted_section
         else:
-            st.write(f"Extracting content from {section_id}")
-            section_html = extract_section_html(session, course_id, section_id)
-            formatted_section = format_template(section_id, section_html)
+            st.write(f"Extracting content from {section_choice}")
+            section_html = extract_section_html(session, course_id, section_choice)
+            formatted_section = format_template(section_choice, section_html)
             html_output = formatted_section
 
         st.download_button(
@@ -130,13 +127,12 @@ st.markdown(
 1. **Enter Your Credentials:**
    - Provide your Moodle username and password.
 
-2. **Select Extraction Mode:**
-   - Choose **All Sections** to extract content from every section of a course.
-   - Choose **Single Section** to extract content from one section only.
+2. **Provide the Course ID:**
+   - Enter the Course ID from the course URL. This field is always required.
 
-3. **Provide Required IDs:**
-   - In both modes, enter the Course ID (from the course URL).
-   - In **Single Section** mode, use the dropdown to select the specific section (e.g., section-1, section-2, etc.).
+3. **Select Section (optional):**
+   - If you select a specific section (e.g., section-1) from the dropdown, only that section will be downloaded.
+   - If you select **All Sections**, content from all sections will be downloaded.
 
 4. **Extract and Download:**
    - Click the **Submit** button.
