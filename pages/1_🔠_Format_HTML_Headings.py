@@ -110,7 +110,7 @@ if st.button("Format HTML"):
 st.markdown("""
 ### Using the HTML Formatter
 
-Once you have completed your plan in Google Docs or Word, convert your document to HTML before processing it for Moodle. You can use a converter such as Word to HTML (https://wordhtml.com/). Save or paste the HTML content into the tool.
+Once you have completed your plan in the desktop version of Word, convert your document to HTML before processing it for Moodle. You can use a converter such as Word to HTML (https://wordhtml.com/). From the desktop version of your Word doc, copy and paste the HTML content into the tool.
 
 1. **Upload or Paste HTML Content**:
    - Use the provided section to either upload an HTML file or paste the HTML content.
