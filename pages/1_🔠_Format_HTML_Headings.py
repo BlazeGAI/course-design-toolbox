@@ -1,5 +1,5 @@
 import streamlit as st
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 import base64
 import re
 
@@ -28,14 +28,20 @@ def is_week_header(text):
 def merge_consecutive_lists(soup):
     """
     Traverse the BeautifulSoup tree and merge adjacent <ol> or <ul> tags.
-    If two consecutive lists of the same type are found, all <li> items
-    from the second list are appended to the first list, and the second list is removed.
+    Whitespace-only text nodes between lists are ignored so that lists are merged.
     """
     for parent in soup.find_all():
         children = list(parent.contents)
         prev_list = None
         for child in children:
-            if hasattr(child, 'name') and child.name in ['ol', 'ul']:
+            # Skip whitespace-only text nodes
+            if isinstance(child, NavigableString):
+                if child.strip() == '':
+                    continue
+                else:
+                    prev_list = None
+                    continue
+            if child.name in ['ol', 'ul']:
                 if prev_list and child.name == prev_list.name:
                     for li in child.find_all('li', recursive=False):
                         prev_list.append(li)
