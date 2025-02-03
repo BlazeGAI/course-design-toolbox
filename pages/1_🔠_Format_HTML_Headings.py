@@ -1,6 +1,7 @@
 import streamlit as st
 from bs4 import BeautifulSoup
 import base64
+import re
 
 st.set_page_config(
     page_title="Format HTML Headings",
@@ -14,25 +15,36 @@ st.sidebar.write(
 )
 st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
 
+def is_week_header(text):
+    """
+    Checks if the text starts with a week header pattern,
+    e.g., "Week 1:" or "Week 1 -".
+    """
+    return re.match(r'^\s*Week\s+\d+\s*[:\-]', text, re.IGNORECASE) is not None
+
 def format_html(design_html, template_html):
     design_soup = BeautifulSoup(design_html, 'html.parser')
     template_soup = BeautifulSoup(template_html, 'html.parser')
 
-    # Extract headings and their levels from the template
-    template_headings = {tag.text.strip(): tag.name for tag in template_soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])}
+    # Create a mapping from heading text to heading tag (e.g., "Overview": "h3")
+    template_headings = {
+        tag.text.strip(): tag.name
+        for tag in template_soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+    }
 
-    # Adjust headings in the design HTML based on the template
-    for tag in design_soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
-        heading_text = tag.text.strip()
-        if heading_text in template_headings:
-            tag.name = template_headings[heading_text]
+    # Process candidate header tags in the design HTML. This includes <p> tags and any existing header tags.
+    for tag in design_soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+        text = tag.get_text(strip=True)
+        if is_week_header(text):
+            # Convert paragraphs starting with a week header to <h1>
+            tag.name = 'h1'
+        elif text in template_headings:
+            # Convert elements with text matching the template heading to the designated tag.
+            tag.name = template_headings[text]
 
-    # Replace curly apostrophes with straight ones
+    # Replace curly apostrophes with straight ones.
     formatted_html = str(design_soup).replace('‘', "'").replace('’', "'")
-
-    # Return the formatted HTML, preserving original nesting
     return formatted_html
-
 
 def get_html_download_link(html, filename):
     b64 = base64.b64encode(html.encode()).decode()
@@ -50,7 +62,6 @@ def process_template(uploaded_template, template_text):
         return uploaded_template.getvalue().decode("utf-8")
     else:
         return template_text
-
 
 # HTML upload or input
 uploaded_html = st.file_uploader("Upload Course Build Plan HTML file", type=['html'])
