@@ -13,7 +13,7 @@ st.sidebar.header("Format HTML Headings")
 st.sidebar.write(
     """This tool formats the headings in your Course Build Plan HTML document to match the Moodle template."""
 )
-st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
+st.sidebar.image("https://i.imgur.com/BPN9akd.png", width=250)
 
 def normalize_text(text):
     """
