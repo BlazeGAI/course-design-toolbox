@@ -93,14 +93,19 @@ def extract_nextgen4_content(html_content):
 
 def main():
 
-    with st.form("moodle_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        course_id = st.text_input("Course ID", value="")
-        submit_button = st.form_submit_button("Log in & Extract All Activities")
-
-    if submit_button:
-        session = requests.Session()
+        ALLOWED_USERNAMES = ["mckay", "mckaym","meadowsml", "schmalleggerd", "raavis"]
+        
+        def main():
+            with st.form("moodle_form"):
+                username = st.text_input("Username")
+                password = st.text_input("Password", type="password")
+                course_id = st.text_input("Course ID", "")
+                submit_button = st.form_submit_button("Submit")
+        
+            if submit_button:
+                if username not in ALLOWED_USERNAMES:
+                    st.error("You do not have permissions to use this tool.")
+                    st.stop()
 
         st.write("Logging into Moodle...")
         if not login_to_moodle(session, username, password):
