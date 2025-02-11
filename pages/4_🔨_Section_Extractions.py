@@ -67,7 +67,7 @@ def format_template(section_name, section_html):
 """
     return template
 
-ALLOWED_USERNAMES = ["mckay", "mckaym","meadowsml", "schmalleggerd", "raavis"]
+ALLOWED_USERNAMES = ["mckay", "mckaym","meadowsml", "schmalleggerd", "raavis", "testabcd"]
 
 def main():
     with st.form("moodle_form"):
