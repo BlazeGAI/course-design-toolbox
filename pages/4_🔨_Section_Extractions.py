@@ -81,8 +81,8 @@ def main():
                 return
     
         course_paths = ["view.php", "section.php"]
-        
         course_response = None
+        
         for path in course_paths:
             course_url = f"https://online.tiffin.edu/course/{path}?id={course_id}"
             course_response = session.get(course_url)
@@ -92,7 +92,7 @@ def main():
         if not course_response or course_response.status_code != 200:
             st.error("Failed to fetch course content.")
             return
-
+        
         soup = BeautifulSoup(course_response.content, "html.parser")
         if not verify_page_loaded(soup):
             st.error("Course content has not fully loaded. Confirm that all dynamic content appears before extraction.")
