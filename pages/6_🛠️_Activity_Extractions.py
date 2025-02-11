@@ -93,7 +93,7 @@ def extract_nextgen4_content(html_content):
 
 def main():
 
-        ALLOWED_USERNAMES = ["mckay", "mckaym","meadowsml", "schmalleggerd", "raavis"]
+        ALLOWED_USERNAMES = ["mckay", "meadowsml", "schmalleggerd", "raavis"]
         
         def main():
             with st.form("moodle_form"):
