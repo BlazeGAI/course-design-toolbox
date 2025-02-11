@@ -6,7 +6,7 @@ st.set_page_config(page_title="Sections Extractor", page_icon="🔨")
 st.title("Sections Extractor")
 st.sidebar.header("Sections Extractor")
 st.sidebar.write("This application extracts the content from each week of the course into an HTML file.")
-st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
+st.sidebar.image("https://i.imgur.com/BPN9akd.png", width=250)
 
 LOGIN_URL = "https://online.tiffin.edu/login/index.php"
 
