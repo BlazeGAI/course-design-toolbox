@@ -74,24 +74,24 @@ def main():
         course_id = st.text_input("Course ID", "12345")
         submit_button = st.form_submit_button("Submit")
 
-    if submit_button:
-        st.write("Logging in and retrieving course content.")
-        session = requests.Session()
-        if not login_to_moodle(session, username, password):
+        if submit_button:
+            st.write("Logging in and retrieving course content.")
+            session = requests.Session()
+            if not login_to_moodle(session, username, password):
+                return
+    
+        course_paths = ["view.php", "section.php"]
+        
+        course_response = None
+        for path in course_paths:
+            course_url = f"https://online.tiffin.edu/course/{path}?id={course_id}"
+            course_response = session.get(course_url)
+            if course_response.status_code == 200:
+                break
+        
+        if not course_response or course_response.status_code != 200:
+            st.error("Failed to fetch course content.")
             return
-
-    course_paths = ["view.php", "section.php"]
-    
-    course_response = None
-    for path in course_paths:
-        course_url = f"https://online.tiffin.edu/course/{path}?id={course_id}"
-        course_response = session.get(course_url)
-        if course_response.status_code == 200:
-            break
-    
-    if not course_response or course_response.status_code != 200:
-        st.error("Failed to fetch course content.")
-        return
 
         soup = BeautifulSoup(course_response.content, "html.parser")
         if not verify_page_loaded(soup):
