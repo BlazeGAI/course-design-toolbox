@@ -80,11 +80,18 @@ def main():
         if not login_to_moodle(session, username, password):
             return
 
-        course_url = f"https://online.tiffin.edu/course/view.php?id={course_id}"
+    course_paths = ["view.php", "section.php"]
+    
+    course_response = None
+    for path in course_paths:
+        course_url = f"https://online.tiffin.edu/course/{path}?id={course_id}"
         course_response = session.get(course_url)
-        if course_response.status_code != 200:
-            st.error("Failed to fetch course content.")
-            return
+        if course_response.status_code == 200:
+            break
+    
+    if not course_response or course_response.status_code != 200:
+        st.error("Failed to fetch course content.")
+        return
 
         soup = BeautifulSoup(course_response.content, "html.parser")
         if not verify_page_loaded(soup):
