@@ -74,11 +74,11 @@ def main():
         course_id = st.text_input("Course ID", "12345")
         submit_button = st.form_submit_button("Submit")
 
-        if submit_button:
-            st.write("Logging in and retrieving course content.")
-            session = requests.Session()
-            if not login_to_moodle(session, username, password):
-                return
+    if submit_button:
+        st.write("Logging in and retrieving course content.")
+        session = requests.Session()
+        if not login_to_moodle(session, username, password):
+            return
     
         course_paths = ["view.php", "section.php"]
         course_response = None
