@@ -49,5 +49,5 @@ Overall, this application is a valuable tool for TU educators and course designe
 )
 st.sidebar.title("COL Course Design Toolbox")
 st.sidebar.success("Select an application above.")
-st.sidebar.image("https://imgur.com/a/xXzFBSI.png", width=250)
+st.sidebar.image("https://imgur.com/BPN9akd", width=250)
     
