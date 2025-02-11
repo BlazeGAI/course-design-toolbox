@@ -96,7 +96,7 @@ def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        course_id = st.text_input("Course ID", value="12345")
+        course_id = st.text_input("Course ID", value="")
         submit_button = st.form_submit_button("Log in & Extract All Activities")
 
     if submit_button:
