@@ -67,6 +67,8 @@ def format_template(section_name, section_html):
 """
     return template
 
+ALLOWED_USERNAMES = ["mckaym", "meadowsml", "schmalleggerd", "raavis"]
+
 def main():
     with st.form("moodle_form"):
         username = st.text_input("Username")
@@ -75,10 +77,13 @@ def main():
         submit_button = st.form_submit_button("Submit")
 
     if submit_button:
-        st.write("Logging in and retrieving course content.")
+        if username not in ALLOWED_USERNAMES:
+            st.error("You do not have permissions to use this tool.")
+            st.stop()
+
         session = requests.Session()
         if not login_to_moodle(session, username, password):
-            return
+            st.stop()
     
         course_paths = ["view.php", "section.php"]
         course_response = None
