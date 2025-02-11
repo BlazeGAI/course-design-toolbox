@@ -11,7 +11,7 @@ st.sidebar.header("HTML Merge to Moodle")
 st.sidebar.write(
     """Once you have the HTML formatted correctly, this application will help you merge the HTML code into Moodle."""
 )
-st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
+st.sidebar.image("https://i.imgur.com/BPN9akd.png", width=250)
 
 # Updated function to read HTML content from an uploaded file
 def read_html_content(uploaded_file):
