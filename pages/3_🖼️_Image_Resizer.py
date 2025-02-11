@@ -14,7 +14,7 @@ st.sidebar.header("Image Resizer")
 st.sidebar.write(
     """This application allows users to resize images. You can upload multiple images, choose one of the common image sizes we use, and download the resized images as a single zip file."""
     )
-st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
+st.sidebar.image("https://i.imgur.com/BPN9akd.png", width=250)
 
 def resize_image(input_path, output_path, base_width):
     img = Image.open(input_path)
