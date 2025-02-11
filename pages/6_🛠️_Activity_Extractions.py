@@ -10,7 +10,7 @@ st.sidebar.header("Activity Extractor")
 st.sidebar.write(
     """This application application extracts the content from each activity in the course into an HTML file."""
     )
-st.sidebar.image("https://i.imgur.com/PD23Zwd.png", width=250)
+st.sidebar.image("https://i.imgur.com/BPN9akd.png", width=250)
 
 LOGIN_URL = "https://online.tiffin.edu/login/index.php"
 
