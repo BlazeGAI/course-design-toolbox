@@ -85,7 +85,7 @@ def extract_nextgen4_content(html_content):
     return str(page_div)
 
 def main():
-    ALLOWED_USERNAMES = ["mckay", "mckaym", "meadowsml", "schmalleggerd", "raavis"]
+    ALLOWED_USERNAMES = ["mckay", "meadowsml", "schmalleggerd", "raavis"]
 
     with st.form("moodle_form"):
         username = st.text_input("Username")
